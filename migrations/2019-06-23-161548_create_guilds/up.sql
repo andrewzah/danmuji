@@ -1,0 +1,4 @@
+CREATE TABLE guilds (
+  id VARCHAR (20) PRIMARY KEY UNIQUE,
+  name VARCHAR (100)
+)

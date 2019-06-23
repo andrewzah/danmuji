@@ -2,3 +2,4 @@
 danmuji
 *.db
 config.json
+/target

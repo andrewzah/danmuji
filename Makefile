@@ -1,4 +1,7 @@
-.PHONY: build
+.PHONY: debug
 
-build:
-	go build -o danmuji app/*
+debug:
+	cargo build
+
+release:
+	cargo build --release
