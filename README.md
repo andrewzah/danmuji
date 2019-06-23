@@ -6,4 +6,6 @@
 
 # 단무지 – Danmuji
 
-단무지 is a little discord bot written in Golang. The goal is to add some commands that can help with Korean learning, or tracking stats.
+단무지 is a little discord bot written in Rust. The goal is to add some commands that can help with Korean learning, or tracking stats.
+
+Run by `andrei#7237` on discord.
