@@ -18,5 +18,5 @@ group!({
     options: {
         prefixes: ["rm", "reminder"],
     },
-    commands: [],
+    commands: [set_reminder],
 });

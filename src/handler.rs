@@ -1,8 +1,7 @@
 use log::{debug, error, info};
-use serenity::model::{channel::Message, event::ResumedEvent, gateway::Ready, id::GuildId};
-use serenity::prelude::*;
+use serenity::{prelude::*, model::prelude::*};
 
-use crate::{db, utils};
+use crate::{db, dispatch::*, utils};
 
 const BOT_ID: u64 = 592184706896756736;
 
@@ -38,6 +37,17 @@ impl EventHandler for Handler {
 
     fn resume(&self, _: Context, resume: ResumedEvent) {
         debug!("Resumed; trace: {:?}", resume.trace);
+    }
+
+    fn reaction_add(&self, context: Context, reaction: Reaction) {
+        let dispatcher = {
+            let mut context = context.data.write();
+            context.get_mut::<DispatcherKey>()
+                .expect("Expected Dispatcher.").clone()
+        };
+
+        dispatcher.write().dispatch_event(
+            &DispatchEvent::ReactEvent(reaction.message_id, reaction.user_id));
     }
 }
 
