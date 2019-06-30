@@ -4,7 +4,7 @@ packages:
   - rust
   - cargo
 sources:
-  - https://git.sr.ht/~andrewzah/danmuji/
+  - https://git.sr.ht/~andrewzah/danmuji
 tasks:
   - test: |
       cd danmuji
