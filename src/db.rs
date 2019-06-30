@@ -1,20 +1,20 @@
-use std::{env, time::Duration, sync::Arc};
+use std::{env, sync::Arc, time::Duration};
 
 use chrono::{DateTime, FixedOffset};
 use diesel::insert_into;
+use diesel::prelude::*;
 use diesel::r2d2;
 use diesel::r2d2::ConnectionManager;
-use diesel::prelude::*;
-use serenity::prelude::*;
-use log::{info};
 use lazy_static::lazy_static;
+use log::info;
+use serenity::prelude::*;
 
 use crate::errors::*;
 use crate::schema::messages;
 
 type Pool = Arc<r2d2::Pool<ConnectionManager<PgConnection>>>;
 
-lazy_static!{
+lazy_static! {
     static ref POOL: Pool = init_pool(&database_url());
 }
 
@@ -79,10 +79,12 @@ pub fn insert_message(ctx: &mut Context, nm: NewMessage) -> Result<usize> {
 
     let pool = match data.get::<DbConn>() {
         Some(pool) => pool,
-        None => return Err(AppError::from_string("A"))
+        None => return Err(AppError::from_string("A")),
     };
 
     let conn = pool.get()?;
-    insert_into(messages).values(&nm).execute(&conn)
+    insert_into(messages)
+        .values(&nm)
+        .execute(&conn)
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }
