@@ -2,10 +2,11 @@
 --   count of the raw message before punctuation & whitespace
 --   gets stripped.
 CREATE TABLE messages (
-  id VARCHAR (20) PRIMARY KEY UNIQUE,
-  guild_id VARCHAR (20) REFERENCES guilds(id) ON DELETE CASCADE,
-  channel_id VARCHAR (20) REFERENCES channels(id) ON DELETE CASCADE,
-  user_id VARCHAR (20) REFERENCES users(id) ON DELETE CASCADE,
+  id SERIAL PRIMARY KEY,
+  message_id VARCHAR (20) UNIQUE NOT NULL,
+  guild_id VARCHAR (20) NOT NULL,
+  channel_id VARCHAR (20) NOT NULL,
+  user_id VARCHAR (20) NOT NULL,
   hangeul_count INT NOT NULL,
   non_hangeul_count INT NOT NULL,
   raw_count INT NOT NULL,

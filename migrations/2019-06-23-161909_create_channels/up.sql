@@ -1,6 +1,7 @@
 CREATE TABLE channels (
-  id VARCHAR (20) PRIMARY KEY UNIQUE,
-  guild_id VARCHAR (20) REFERENCES guilds(id),
-  name VARCHAR (100),
+  id SERIAL PRIMARY KEY,
+  channel_id VARCHAR (20) NOT NULL,
+  guild_id VARCHAR (20),
+  name VARCHAR (100) NOT NULL,
   enabled BOOLEAN DEFAULT true
 )

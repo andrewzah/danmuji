@@ -1,7 +1,10 @@
+#[macro_use]
+extern crate diesel;
+
 use std::{collections::{HashMap, HashSet}, env, fmt::Write, sync::Arc};
 
 use dotenv::dotenv;
-use log::{info, debug};
+use log::{info, debug, error};
 use serenity::{
     client::bridge::gateway::{ShardId, ShardManager},
     framework::standard::{
@@ -15,6 +18,8 @@ use serenity::{
 use serenity::prelude::*;
 
 mod db;
+mod errors;
+mod schema;
 mod utils;
 
 const BOT_ID: u64 = 592184706896756736;
@@ -41,19 +46,22 @@ impl EventHandler for Handler {
         if msg.author.id == BOT_ID { return }
 
         let formatted_content = utils::format_content(&msg.content);
-        let im = db::InsertMessage {
-            guild_id: msg.guild_id.unwrap_or(GuildId(0_u64)).to_string(),
-            channel_id: msg.channel_id.to_string(),
-            user_id: msg.author.id.to_string(),
-            message_id: msg.id.to_string(),
+        let m = db::NewMessage {
+            message_id: &msg.id.to_string(),
+            guild_id: &msg.guild_id.unwrap_or(GuildId(0_u64)).to_string(),
+            channel_id: &msg.channel_id.to_string(),
+            user_id: &msg.author.id.to_string(),
             hangeul_count: 0,
             non_hangeul_count: 1,
             raw_count: 2,
-            time: msg.timestamp.to_string()
+            time: msg.timestamp,
         };
+
         //parse_content(&formatted_content);
-        db::insert(&mut ctx, im);
-        info!("finished inserting msg");
+        match db::insert_message(&mut ctx, m) {
+            Ok(u) => info!("finished inserting msg: usize? {}", u),
+            Err(err) => error!(":x: error: {}", err)
+        }
     }
 
     fn resume(&self, _: Context, resume: ResumedEvent) {

@@ -1,12 +1,16 @@
 use std::{env, time::Duration, sync::Arc};
 
-use diesel::sql_query;
+use chrono::{DateTime, FixedOffset};
+use diesel::insert_into;
 use diesel::r2d2;
 use diesel::r2d2::ConnectionManager;
 use diesel::prelude::*;
 use serenity::prelude::*;
-use log::{info, error};
+use log::{info};
 use lazy_static::lazy_static;
+
+use crate::errors::*;
+use crate::schema::messages;
 
 type Pool = Arc<r2d2::Pool<ConnectionManager<PgConnection>>>;
 
@@ -41,69 +45,44 @@ pub fn connection() -> Pool {
     Arc::clone(&POOL)
 }
 
-pub struct InsertMessage {
-    pub guild_id: String,
-    pub channel_id: String,
-    pub user_id: String,
-    pub message_id: String,
+#[derive(Insertable, Debug)]
+#[table_name = "messages"]
+pub struct NewMessage<'a> {
+    pub message_id: &'a str,
+    pub guild_id: &'a str,
+    pub channel_id: &'a str,
+    pub user_id: &'a str,
     pub hangeul_count: i32,
     pub non_hangeul_count: i32,
     pub raw_count: i32,
-    pub time: String,
+    pub time: DateTime<FixedOffset>,
+}
+
+#[derive(Queryable, PartialEq, Debug)]
+pub struct Message {
+    pub id: String,
+    pub message_id: String,
+    pub guild_id: String,
+    pub channel_id: String,
+    pub user_id: String,
+    pub hangeul_count: i32,
+    pub non_hangeul_count: i32,
+    pub raw_count: i32,
+    pub time: DateTime<FixedOffset>,
 }
 
 // --------------------------------------
 
-
-macro_rules! sql_string {
-    () => (r#"
-        INSERT INTO guilds (id)
-        VALUES ('{guild_id}')
-        ON CONFLICT DO NOTHING;
-
-        INSERT INTO channels (id, guild_id)
-        VALUES ('{channel_id}', '{guild_id}')
-        ON CONFLICT DO NOTHING;
-
-        INSERT INTO users (id)
-        VALUES ('{user_id}')
-        ON CONFLICT DO NOTHING;
-
-        INSERT INTO messages
-        (id, guild_id, channel_id, user_id, hangeul_count,
-        non_hangeul_count, raw_count, time)
-        VALUES
-        ('{message_id}', '{guild_id}', '{channel_id}', '{user_id}', {hangeul_count}, {non_hangeul_count}, {raw_count}, '{time}');
-    "#)
-}
-
-pub fn insert(ctx: &mut Context, im: InsertMessage) {
+pub fn insert_message(ctx: &mut Context, nm: NewMessage) -> Result<usize> {
+    use crate::schema::messages::dsl::*;
     let data = ctx.data.read();
 
     let pool = match data.get::<DbConn>() {
         Some(pool) => pool,
-        None => {
-            error!("There was an error getting the db connection!");
-            return;
-        }
+        None => return Err(AppError::from_string("A"))
     };
 
-    let query = format!(
-        sql_string!(),
-        guild_id = im.guild_id,
-        channel_id = im.channel_id,
-        user_id = im.user_id,
-        message_id = im.message_id,
-        hangeul_count = im.hangeul_count,
-        non_hangeul_count = im.non_hangeul_count,
-        raw_count = im.raw_count,
-        time = im.time
-    );
-    info!("{}", &query);
-
-    let conn = pool.get().expect("Unable to get connection from pool");
-    match conn.execute(&query) {
-        Ok(res) => info!("inserted successfully: {}", res),
-        Err(err) => error!("error inserting: {}", err)
-    }
+    let conn = pool.get()?;
+    insert_into(messages).values(&nm).execute(&conn)
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }

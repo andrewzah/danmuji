@@ -1,6 +1,7 @@
 CREATE TABLE users (
-  id VARCHAR (20) PRIMARY KEY UNIQUE,
-  name VARCHAR (32),
+  id SERIAL PRIMARY KEY,
+  user_id VARCHAR (20) UNIQUE NOT NULL,
+  name VARCHAR (32) NOT NULL,
   enabled BOOLEAN DEFAULT true,
   roles TEXT [],
   guilds TEXT [],

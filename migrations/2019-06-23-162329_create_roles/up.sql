@@ -1,6 +1,7 @@
 CREATE TABLE roles (
-  id VARCHAR (20) PRIMARY KEY UNIQUE,
-  guild_id VARCHAR (20) REFERENCES guilds(id),
-  name VARCHAR (100),
-  color INT
+  id SERIAL PRIMARY KEY,
+  role_id VARCHAR (20) UNIQUE NOT NULL,
+  guild_id VARCHAR (20) NOT NULL,
+  name VARCHAR (100) NOT NULL,
+  color INT NOT NULL
 )
