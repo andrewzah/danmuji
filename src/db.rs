@@ -24,7 +24,7 @@ impl TypeMapKey for DbConn {
 }
 
 fn database_url() -> String {
-    env::var("DATABASE_URL").expect("Is DATABASE_URL set?")
+    env::var("DANMUJI_DATABASE_URL").expect("Is DATABASE_URL set?")
 }
 
 fn init_pool(db_url: &str) -> Pool {

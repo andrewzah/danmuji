@@ -1,5 +1,8 @@
+.env
 .DS_Store
+
 danmuji
+
 *.db
 config.json
 /target
