@@ -11,3 +11,6 @@ fmt:
 
 reset:
 	@diesel database reset
+
+seed: reset
+	@psql -d danmuji_dev -f seed.sql
