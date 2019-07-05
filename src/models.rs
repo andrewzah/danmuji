@@ -50,7 +50,7 @@ pub struct Message {
     pub hangeul_count: i32,
     pub non_hangeul_count: i32,
     pub raw_count: i32,
-    pub time: DateTime<FixedOffset>,
+    pub time: DateTime<Utc>,
 }
 
 #[derive(QueryableByName, PartialEq, Debug)]

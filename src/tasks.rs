@@ -55,9 +55,11 @@ fn populate_users(ctx: &Context) {
     let mut scheduler = scheduler.write();
 
     scheduler.add_task_duration(interval, move |_| {
-        info!("Running empty task.");
+        info!("Running task.");
+        
+        let messages = db::get_messages(&ctx);
 
-        info!("Finished empty task.");
+        info!("Finished task.");
         DateResult::Repeat(Utc::now() + interval)
     });
 }

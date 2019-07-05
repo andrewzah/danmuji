@@ -61,3 +61,21 @@ pub fn insert_message(ctx: &Context, nm: NewMessage) -> Result<usize> {
         .execute(&conn)
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }
+
+pub fn get_messages(ctx: &Context) -> Result<Vec<Message>> {
+    use crate::schema::messages::dsl::*;
+
+    let data = ctx.data.read();
+    let pool = match data.get::<DbConn>() {
+        Some(pool) => pool,
+        None => return Err(AppError::from_string("A")),
+    };
+
+    let conn = pool.get()?;
+    let results = messages
+        .limit(3)
+        .load::<Message>(&conn);
+
+    results
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
