@@ -1,13 +1,21 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+
 #[macro_use]
 extern crate diesel;
 
 use std::{env, sync::Arc};
 
 use dotenv::dotenv;
-use serenity::{client::bridge::gateway::ShardManager, framework::standard::StandardFramework, model::id::UserId};
-use serenity::prelude::*;
-use hey_listen::sync::{ParallelDispatcher as Dispatcher,
-ParallelDispatcherRequest as DispatcherRequest};
+use hey_listen::sync::ParallelDispatcher as Dispatcher;
+use log::error;
+use serenity::{
+    client::bridge::gateway::ShardManager,
+    framework::standard::{DispatchError, StandardFramework},
+    model::id::UserId,
+    prelude::*,
+};
 use white_rabbit::Scheduler;
 
 mod commands;
@@ -16,9 +24,10 @@ mod dispatch;
 mod errors;
 mod handler;
 mod schema;
+mod tasks;
 mod utils;
 
-use commands::groups::*;
+use commands::{general::MY_HELP, groups::*};
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
 use handler::Handler;
 
@@ -33,11 +42,9 @@ fn init_logging() {
     builder.init()
 }
 
-fn get_bot_id(client: Client) -> UserId {
+fn get_bot_id(client: &Client) -> UserId {
     match client.cache_and_http.http.get_current_application_info() {
-        Ok(info) => {
-            return info.id
-        },
+        Ok(info) => return info.id,
         Err(why) => panic!("Could not access application info: {:?}", why),
     }
 }
@@ -52,7 +59,9 @@ fn main() {
     let scheduler = Arc::new(RwLock::new(scheduler));
 
     let mut dispatcher: Dispatcher<DispatchEvent> = Dispatcher::default();
-    dispatcher.num_threads(4).expect("Could not construct threadpool");
+    dispatcher
+        .num_threads(4)
+        .expect("Could not construct dispatcher threadpool");
 
     let mut client = Client::new(discord_token, Handler).expect("Error creating client");
     {
@@ -64,15 +73,35 @@ fn main() {
         data.insert::<SchedulerKey>(scheduler);
     }
 
-    let bot_id = get_bot_id(client);
+    let bot_id = get_bot_id(&client);
 
     client.with_framework(
         StandardFramework::new()
-            .configure(|c| c
-                .prefix("yi ")
-                .on_mention(Some(bot_id))
-            )
-            .group(&GENERAL_GROUP),
+            .configure(|c| {
+                c.prefix("yi ")
+                    .on_mention(Some(bot_id))
+                    .delimiters(vec![", ", ","])
+            })
+            .on_dispatch_error(|ctx, msg, error| {
+                if let DispatchError::Ratelimited(seconds) = error {
+                    let _ = msg.channel_id.say(
+                        &ctx.http,
+                        &format!("Try this again in {} seconds.", seconds),
+                    );
+                }
+            })
+            .after(|ctx, msg, cmd_name, error| {
+                if let Err(why) = error {
+                    let _ = msg.channel_id.say(
+                        &ctx.http,
+                        &format!(":x: Error in {}: {:?}", &cmd_name, &why),
+                    );
+                    error!("Error in {}: {:?}", cmd_name, why);
+                }
+            })
+            .help(&MY_HELP)
+            .group(&GENERAL_GROUP)
+            .group(&REMIND_ME_GROUP),
     );
 
     if let Err(why) = client.start() {

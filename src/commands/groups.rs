@@ -1,11 +1,6 @@
 use serenity::framework::standard::macros::group;
 
-#[allow(dead_code)]
-use crate::commands::{
-    general::*,
-    reminders::*,
-    //queries::*,
-};
+use crate::commands::{general::*, reminders::*};
 
 group!({
     name: "general",
@@ -15,8 +10,6 @@ group!({
 
 group!({
     name: "remind_me",
-    options: {
-        prefixes: ["rm", "reminder"],
-    },
-    commands: [set_reminder],
+    options: {},
+    commands: [add_reminder],
 });

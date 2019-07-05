@@ -1,16 +1,16 @@
 use std::{env, sync::Arc, time::Duration};
 
 use chrono::{DateTime, FixedOffset};
-use diesel::insert_into;
-use diesel::prelude::*;
-use diesel::r2d2;
-use diesel::r2d2::ConnectionManager;
+use diesel::{
+    insert_into,
+    prelude::*,
+    r2d2::{self, ConnectionManager},
+};
 use lazy_static::lazy_static;
 use log::info;
 use serenity::prelude::*;
 
-use crate::errors::*;
-use crate::schema::messages;
+use crate::{errors::*, schema::messages};
 
 type Pool = Arc<r2d2::Pool<ConnectionManager<PgConnection>>>;
 
@@ -29,6 +29,7 @@ fn database_url() -> String {
 
 fn init_pool(db_url: &str) -> Pool {
     let manager = ConnectionManager::<PgConnection>::new(db_url);
+
     let r2d2_pool = r2d2::Pool::builder()
         .max_size(1)
         .connection_timeout(Duration::from_secs(60))
@@ -36,8 +37,8 @@ fn init_pool(db_url: &str) -> Pool {
         .expect("Unable to build pool!");
 
     let pool = Arc::new(r2d2_pool);
-    info!("Database pool initialized!");
 
+    info!("Database pool initialized!");
     pool
 }
 
@@ -71,12 +72,12 @@ pub struct Message {
     pub time: DateTime<FixedOffset>,
 }
 
-// --------------------------------------
+// ------todo: put into another file probably -----------------
 
 pub fn insert_message(ctx: &mut Context, nm: NewMessage) -> Result<usize> {
     use crate::schema::messages::dsl::*;
-    let data = ctx.data.read();
 
+    let data = ctx.data.read();
     let pool = match data.get::<DbConn>() {
         Some(pool) => pool,
         None => return Err(AppError::from_string("A")),

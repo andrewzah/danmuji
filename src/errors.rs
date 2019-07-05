@@ -1,5 +1,4 @@
-use std::fmt;
-use std::result;
+use std::{fmt, result};
 
 pub type Result<T> = result::Result<T, AppError>;
 
@@ -28,7 +27,6 @@ impl AppError {
     //match *self.0 {
     //ErrorKind::Io(_) => true,
     //_ => false,
-    //}
     //}
 }
 

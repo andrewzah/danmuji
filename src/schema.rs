@@ -7,7 +7,6 @@ table! {
         enabled -> Nullable<Bool>,
     }
 }
-
 table! {
     guilds (id) {
         id -> Int4,
@@ -15,7 +14,6 @@ table! {
         name -> Varchar,
     }
 }
-
 table! {
     messages (id) {
         id -> Int4,
@@ -29,7 +27,6 @@ table! {
         time -> Timestamptz,
     }
 }
-
 table! {
     roles (id) {
         id -> Int4,
@@ -39,7 +36,6 @@ table! {
         color -> Int4,
     }
 }
-
 table! {
     users (id) {
         id -> Int4,
@@ -51,5 +47,4 @@ table! {
         channels -> Nullable<Array<Text>>,
     }
 }
-
 allow_tables_to_appear_in_same_query!(channels, guilds, messages, roles, users,);

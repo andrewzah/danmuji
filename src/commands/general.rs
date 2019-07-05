@@ -5,7 +5,10 @@ use serenity::{
     framework::standard::{
         help_commands,
         macros::{command, help},
-        Args, CommandGroup, CommandResult, HelpOptions,
+        Args,
+        CommandGroup,
+        CommandResult,
+        HelpOptions,
     },
     model::{channel::Message, id::UserId},
 };
@@ -27,6 +30,5 @@ fn my_help(
 #[command]
 fn ping(ctx: &mut Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "Pong!")?;
-
     Ok(())
 }
