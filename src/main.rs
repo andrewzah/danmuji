@@ -23,6 +23,7 @@ mod db;
 mod dispatch;
 mod errors;
 mod handler;
+mod models;
 mod schema;
 mod tasks;
 mod utils;

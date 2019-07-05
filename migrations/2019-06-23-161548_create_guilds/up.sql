@@ -1,5 +1,0 @@
-CREATE TABLE guilds (
-  id SERIAL PRIMARY KEY,
-  guild_id VARCHAR (20) UNIQUE NOT NULL,
-  name VARCHAR (100) NOT NULL
-)

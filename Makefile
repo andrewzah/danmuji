@@ -1,10 +1,13 @@
 .PHONY: debug
 
 debug:
-	cargo build
+	@cargo build
 
 release:
-	cargo build --release
+	@cargo build --release
 
 fmt:
 	@cargo +nightly fmt
+
+reset:
+	@diesel database reset

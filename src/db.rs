@@ -1,16 +1,16 @@
 use std::{env, sync::Arc, time::Duration};
 
-use chrono::{DateTime, FixedOffset};
 use diesel::{
     insert_into,
     prelude::*,
     r2d2::{self, ConnectionManager},
+    sql_query,
 };
 use lazy_static::lazy_static;
 use log::info;
 use serenity::prelude::*;
 
-use crate::{errors::*, schema::messages};
+use crate::{errors::*, models::*, schema::messages};
 
 type Pool = Arc<r2d2::Pool<ConnectionManager<PgConnection>>>;
 
@@ -46,35 +46,7 @@ pub fn connection() -> Pool {
     Arc::clone(&POOL)
 }
 
-#[derive(Insertable, Debug)]
-#[table_name = "messages"]
-pub struct NewMessage<'a> {
-    pub message_id: &'a str,
-    pub guild_id: &'a str,
-    pub channel_id: &'a str,
-    pub user_id: &'a str,
-    pub hangeul_count: i32,
-    pub non_hangeul_count: i32,
-    pub raw_count: i32,
-    pub time: DateTime<FixedOffset>,
-}
-
-#[derive(Queryable, PartialEq, Debug)]
-pub struct Message {
-    pub id: String,
-    pub message_id: String,
-    pub guild_id: String,
-    pub channel_id: String,
-    pub user_id: String,
-    pub hangeul_count: i32,
-    pub non_hangeul_count: i32,
-    pub raw_count: i32,
-    pub time: DateTime<FixedOffset>,
-}
-
-// ------todo: put into another file probably -----------------
-
-pub fn insert_message(ctx: &mut Context, nm: NewMessage) -> Result<usize> {
+pub fn insert_message(ctx: &Context, nm: NewMessage) -> Result<usize> {
     use crate::schema::messages::dsl::*;
 
     let data = ctx.data.read();
