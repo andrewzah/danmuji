@@ -30,6 +30,7 @@ mod utils;
 
 use commands::{general::MY_HELP, groups::*};
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
+use errors::{AppError, ErrorKind};
 use handler::Handler;
 
 struct ShardManagerContainer;
@@ -91,14 +92,11 @@ fn main() {
                     );
                 }
             })
-            .after(|ctx, msg, cmd_name, error| {
-                if let Err(why) = error {
-                    let _ = msg.channel_id.say(
-                        &ctx.http,
-                        &format!(":x: Error in {}: {:?}", &cmd_name, &why),
-                    );
-                    error!("Error in {}: {:?}", cmd_name, why);
-                }
+            .after(|ctx, msg, cmd_name, res| {
+                res
+                    .map_err(|err| AppError::new(ErrorKind::Command(err)).send_err(&ctx.http, msg, "Unable to run command".into()));
+                    
+
             })
             .help(&MY_HELP)
             .group(&GENERAL_GROUP)

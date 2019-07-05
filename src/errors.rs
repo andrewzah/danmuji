@@ -1,5 +1,7 @@
 use std::{fmt, result};
 
+use serenity::{http::Http, model::prelude::*};
+
 pub type Result<T> = result::Result<T, AppError>;
 
 pub struct AppError(Box<ErrorKind>);
@@ -36,7 +38,9 @@ pub enum ErrorKind {
     R2D2(r2d2::Error),
     DbResult(diesel::result::Error),
     Regex(regex::Error),
-    IO(std::io::Error)
+    IO(std::io::Error),
+    Serenity(serenity::Error),
+    Command(serenity::framework::standard::CommandError)
 }
 
 impl fmt::Display for AppError {
@@ -48,6 +52,21 @@ impl fmt::Display for AppError {
             ErrorKind::Regex(ref err) => err.fmt(f),
             ErrorKind::IO(ref err) => err.fmt(f),
         }
+    }
+}
+
+impl AppError {
+    pub fn send_err(&self, http: &Http, msg: &Message, why: String) -> Result<Message> {
+        msg.channel_id.send_message(&http, |m| {
+            m.embed( |mut e| {
+                e.title("Error");
+                e.description(format!(":x: {}: {}", why, *self));
+
+                e
+            });
+
+            m
+        }).map_err(|err| AppError::new(ErrorKind::Serenity(err)))
     }
 }
 
@@ -72,5 +91,11 @@ impl From<regex::Error> for AppError {
 impl From<std::io::Error> for AppError {
     fn from(err: std::io::Error) -> AppError {
         AppError::new(ErrorKind::IO(err))
+    }
+}
+
+impl From<serenity::Error> for AppError {
+    fn from(err: serenity::Error) -> AppError {
+        AppError::new(ErrorKind::Serenity(err))
     }
 }
