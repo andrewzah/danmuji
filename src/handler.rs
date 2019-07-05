@@ -1,7 +1,7 @@
 use log::{debug, error, info};
 use serenity::{model::prelude::*, prelude::*};
 
-use crate::{db, dispatch::*, models::NewMessage, tasks, utils};
+use crate::{db, dispatch::*, errors::*, models::NewMessage, tasks, utils};
 
 const BOT_ID: u64 = 592184706896756736;
 
@@ -17,10 +17,14 @@ impl EventHandler for Handler {
             return;
         }
 
-        let m = NewMessage::from_msg(msg);
-        m.write_to_db(&ctx);
+        if msg.content.starts_with("yi ") {
+            return;
+        }
 
-        //parse_content(&formatted_content);
+        match NewMessage::from_msg(msg) {
+            Ok(msg) => msg.write_to_db(&ctx),
+            Err(err) => error!("err creating msg: {}", err)
+        }
     }
 
     fn resume(&self, _: Context, resume: ResumedEvent) {
@@ -45,19 +49,3 @@ impl EventHandler for Handler {
     }
 }
 
-#[allow(dead_code)]
-fn parse_content(content: &str) {
-    let mut non_hangeul = 0;
-    let mut hangeul = 0;
-    let blocks = content.trim().split("");
-
-    for block in blocks {
-        for character in block.chars() {
-            if utils::is_hangeul(character) {
-                hangeul += 1;
-            } else {
-                non_hangeul += 1;
-            }
-        }
-    }
-}

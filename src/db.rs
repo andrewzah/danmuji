@@ -1,4 +1,4 @@
-use std::{env, sync::Arc, time::Duration};
+use std::{env, fs, path::{Path, PathBuf}, sync::Arc, time::Duration};
 
 use diesel::{
     insert_into,
@@ -13,13 +13,14 @@ use serenity::prelude::*;
 use crate::{errors::*, models::*, schema::messages};
 
 type Pool = Arc<r2d2::Pool<ConnectionManager<PgConnection>>>;
+type Conn = r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 
 lazy_static! {
     static ref POOL: Pool = init_pool(&database_url());
 }
 
-pub struct DbConn;
-impl TypeMapKey for DbConn {
+pub struct DbPool;
+impl TypeMapKey for DbPool {
     type Value = Pool;
 }
 
@@ -42,7 +43,7 @@ fn init_pool(db_url: &str) -> Pool {
     pool
 }
 
-pub fn connection() -> Pool {
+pub fn pool() -> Pool {
     Arc::clone(&POOL)
 }
 
@@ -50,7 +51,7 @@ pub fn insert_message(ctx: &Context, nm: NewMessage) -> Result<usize> {
     use crate::schema::messages::dsl::*;
 
     let data = ctx.data.read();
-    let pool = match data.get::<DbConn>() {
+    let pool = match data.get::<DbPool>() {
         Some(pool) => pool,
         None => return Err(AppError::from_string("A")),
     };
@@ -62,20 +63,16 @@ pub fn insert_message(ctx: &Context, nm: NewMessage) -> Result<usize> {
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }
 
-pub fn get_messages(ctx: &Context) -> Result<Vec<Message>> {
+pub fn get_ratio_list() -> Result<RatioResultList> {
     use crate::schema::messages::dsl::*;
+    
+    let conn = pool().get()?;
+    let sql = fs::read_to_string("sql/ratio.sql")?;
 
-    let data = ctx.data.read();
-    let pool = match data.get::<DbConn>() {
-        Some(pool) => pool,
-        None => return Err(AppError::from_string("A")),
-    };
-
-    let conn = pool.get()?;
-    let results = messages
-        .limit(3)
-        .load::<Message>(&conn);
+    let results = sql_query(sql)
+        .load(&conn);
 
     results
+        .map(|list| RatioResultList::from_list(list))
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }

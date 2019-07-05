@@ -69,7 +69,7 @@ fn main() {
         let mut data = client.data.write();
 
         data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
-        data.insert::<db::DbConn>(db::connection());
+        data.insert::<db::DbPool>(db::pool());
         data.insert::<DispatcherKey>(Arc::new(RwLock::new(dispatcher)));
         data.insert::<SchedulerKey>(scheduler);
     }

@@ -36,6 +36,7 @@ pub enum ErrorKind {
     R2D2(r2d2::Error),
     DbResult(diesel::result::Error),
     Regex(regex::Error),
+    IO(std::io::Error)
 }
 
 impl fmt::Display for AppError {
@@ -45,6 +46,7 @@ impl fmt::Display for AppError {
             ErrorKind::R2D2(ref err) => err.fmt(f),
             ErrorKind::DbResult(ref err) => err.fmt(f),
             ErrorKind::Regex(ref err) => err.fmt(f),
+            ErrorKind::IO(ref err) => err.fmt(f),
         }
     }
 }
@@ -64,5 +66,11 @@ impl From<diesel::result::Error> for AppError {
 impl From<regex::Error> for AppError {
     fn from(err: regex::Error) -> AppError {
         AppError::new(ErrorKind::Regex(err))
+    }
+}
+
+impl From<std::io::Error> for AppError {
+    fn from(err: std::io::Error) -> AppError {
+        AppError::new(ErrorKind::IO(err))
     }
 }
