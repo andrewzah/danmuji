@@ -40,7 +40,7 @@ pub enum ErrorKind {
     Regex(regex::Error),
     IO(std::io::Error),
     Serenity(serenity::Error),
-    Command(serenity::framework::standard::CommandError)
+    Command(serenity::framework::standard::CommandError),
 }
 
 impl fmt::Display for AppError {
@@ -57,16 +57,18 @@ impl fmt::Display for AppError {
 
 impl AppError {
     pub fn send_err(&self, http: &Http, msg: &Message, why: String) -> Result<Message> {
-        msg.channel_id.send_message(&http, |m| {
-            m.embed( |mut e| {
-                e.title("Error");
-                e.description(format!(":x: {}: {}", why, *self));
+        msg.channel_id
+            .send_message(&http, |m| {
+                m.embed(|mut e| {
+                    e.title("Error");
+                    e.description(format!(":x: {}: {}", why, *self));
 
-                e
-            });
+                    e
+                });
 
-            m
-        }).map_err(|err| AppError::new(ErrorKind::Serenity(err)))
+                m
+            })
+            .map_err(|err| AppError::new(ErrorKind::Serenity(err)))
     }
 }
 

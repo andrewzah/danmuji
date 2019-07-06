@@ -1,7 +1,10 @@
-use log::{info, debug};
+use log::{debug, info};
 use regex::Regex;
 
-use crate::{errors::{AppError, Result}, utils};
+use crate::{
+    errors::{AppError, Result},
+    utils,
+};
 
 const SYLLABLE_START: u32 = 0xAC00;
 const SYLLABLE_END: u32 = 0xD7A3;

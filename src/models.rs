@@ -1,7 +1,10 @@
 use chrono::{DateTime, FixedOffset, Utc};
-use diesel::{sql_types::*, prelude::*};
-use log::{info,error};
-use serenity::{client::Context, model::{channel::Message as SerenityMessage, id::GuildId}};
+use diesel::{prelude::*, sql_types::*};
+use log::{error, info};
+use serenity::{
+    client::Context,
+    model::{channel::Message as SerenityMessage, id::GuildId},
+};
 
 use crate::{db, errors::Result, schema::messages, utils};
 
@@ -21,8 +24,7 @@ pub struct NewMessage {
 impl NewMessage {
     pub fn from_msg(msg: SerenityMessage) -> Result<NewMessage> {
         let (hc, nhc, rc) = utils::parse_content(&msg.content)?;
-        Ok(
-        NewMessage {
+        Ok(NewMessage {
             message_id: msg.id.to_string(),
             guild_id: msg.guild_id.unwrap_or(GuildId(0_u64)).to_string(),
             channel_id: msg.channel_id.to_string(),
@@ -79,11 +81,11 @@ pub struct RatioResult {
     pub sum_messages: i64,
 
     #[sql_type = "Double"]
-    pub ratio: f64
+    pub ratio: f64,
 }
 
 pub struct RatioResultList {
-    list: Vec<RatioResult>
+    list: Vec<RatioResult>,
 }
 
 impl RatioResultList {

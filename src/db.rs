@@ -1,4 +1,10 @@
-use std::{env, fs, path::{Path, PathBuf}, sync::Arc, time::Duration};
+use std::{
+    env,
+    fs,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 
 use diesel::{
     insert_into,
@@ -65,12 +71,11 @@ pub fn insert_message(ctx: &Context, nm: NewMessage) -> Result<usize> {
 
 pub fn get_ratio_list() -> Result<RatioResultList> {
     use crate::schema::messages::dsl::*;
-    
+
     let conn = pool().get()?;
     let sql = fs::read_to_string("sql/ratio.sql")?;
 
-    let results = sql_query(sql)
-        .load(&conn);
+    let results = sql_query(sql).load(&conn);
 
     results
         .map(|list| RatioResultList::from_list(list))

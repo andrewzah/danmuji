@@ -70,9 +70,9 @@ fn populate_users(ctx: &Context) {
 
         let channel_id = ChannelId(chan_id);
 
-        match channel_id.send_message(&http, |m| { m.content(ratio_list.pretty_print()) }) {
-            Ok(_) => {},
-            Err(err) => error!("err sending msg: {}", err)
+        match channel_id.send_message(&http, |m| m.content(ratio_list.pretty_print())) {
+            Ok(_) => {}
+            Err(err) => error!("err sending msg: {}", err),
         };
 
         info!("Finished ratio task.");

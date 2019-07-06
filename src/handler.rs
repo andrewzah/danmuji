@@ -23,7 +23,7 @@ impl EventHandler for Handler {
 
         match NewMessage::from_msg(msg) {
             Ok(msg) => msg.write_to_db(&ctx),
-            Err(err) => error!("err creating msg: {}", err)
+            Err(err) => error!("err creating msg: {}", err),
         }
     }
 
@@ -48,4 +48,3 @@ impl EventHandler for Handler {
             ));
     }
 }
-
