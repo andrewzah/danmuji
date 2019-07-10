@@ -1,7 +1,7 @@
 use log::{debug, error, info};
 use serenity::{model::prelude::*, prelude::*};
 
-use crate::{db, dispatch::*, errors::*, models::NewMessage, tasks, utils};
+use crate::{db, dispatch::*, errors::*, models::message::NewMessage, tasks, utils};
 
 const BOT_ID: u64 = 592184706896756736;
 
@@ -9,7 +9,7 @@ pub struct Handler;
 impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
         info!("{} is connected!", ready.user.name);
-        tasks::init_tasks(&ctx);
+        //tasks::init_tasks(&ctx);
     }
 
     fn message(&self, ctx: Context, msg: Message) {
@@ -22,7 +22,7 @@ impl EventHandler for Handler {
         }
 
         match NewMessage::from_msg(msg) {
-            Ok(msg) => msg.write_to_db(&ctx),
+            Ok(msg) => msg.insert(),
             Err(err) => error!("err creating msg: {}", err),
         }
     }

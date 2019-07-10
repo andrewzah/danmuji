@@ -16,7 +16,11 @@ use lazy_static::lazy_static;
 use log::info;
 use serenity::prelude::*;
 
-use crate::{errors::*, models::*, schema::messages};
+use crate::{
+    errors::*,
+    models::{channel::NewChannel, message::NewMessage, user::NewUser, ratio::RatioResultList},
+    schema::messages,
+};
 
 type Pool = Arc<r2d2::Pool<ConnectionManager<PgConnection>>>;
 type Conn = r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
@@ -53,21 +57,42 @@ pub fn pool() -> Pool {
     Arc::clone(&POOL)
 }
 
-pub fn insert_message(ctx: &Context, nm: NewMessage) -> Result<usize> {
+// ---------------- INSERTS/UPDATES --------------------
+
+pub fn insert_message(nm: NewMessage) -> Result<usize> {
     use crate::schema::messages::dsl::*;
 
-    let data = ctx.data.read();
-    let pool = match data.get::<DbPool>() {
-        Some(pool) => pool,
-        None => return Err(AppError::from_string("A")),
-    };
-
-    let conn = pool.get()?;
+    let conn = pool().get()?;
     insert_into(messages)
         .values(&nm)
         .execute(&conn)
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }
+
+pub fn insert_channel(nc: NewChannel) -> Result<usize> {
+    use crate::schema::channels::dsl::*;
+
+    let conn = pool().get()?;
+    insert_into(channels)
+        .values(&nc)
+        .execute(&conn)
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
+pub fn upsert_user(nu: &NewUser) -> Result<usize> {
+    use crate::schema::users::dsl::*;
+
+    let conn = pool().get()?;
+    insert_into(users)
+        .values(nu)
+        .on_conflict(user_id)
+        .do_update()
+        .set(opt_out.eq(nu.opt_out))
+        .execute(&conn)
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
+// ---------------- SQL QUERIES ----------------------
 
 pub fn get_ratio_list() -> Result<RatioResultList> {
     use crate::schema::messages::dsl::*;

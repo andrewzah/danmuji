@@ -94,15 +94,12 @@ fn main() {
             })
             .after(|ctx, msg, cmd_name, res| {
                 res.map_err(|err| {
-                    AppError::new(ErrorKind::Command(err)).send_err(
-                        &ctx.http,
-                        msg,
-                        "Unable to run command".into(),
-                    )
+                    AppError::from(err).send_err(&ctx.http, msg, "Unable to run command".into())
                 });
             })
             .help(&MY_HELP)
             .group(&GENERAL_GROUP)
+            .group(&HANGEUL_GROUP)
             .group(&REMIND_ME_GROUP),
     );
 
