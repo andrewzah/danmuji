@@ -1,24 +1,21 @@
 use std::collections::HashSet;
 
-use log::{info, debug};
+use log::{debug, info};
 use serenity::{
     client::Context,
     framework::standard::{
         help_commands,
         macros::{command, help},
         Args,
+        CommandError,
         CommandGroup,
         CommandResult,
-        CommandError,
         HelpOptions,
     },
     model::{channel::Message, id::UserId},
 };
 
-use crate::{
-    db,
-    commands::groups::*,
-    models::user::NewUser};
+use crate::{commands::groups::*, db, models::user::NewUser};
 
 #[help]
 fn my_help(
@@ -47,12 +44,12 @@ fn ratio(ctx: &mut Context, msg: &Message) -> CommandResult {
 fn change_user_opt_out(opt_out: bool, user_id: String, msg: &Message) -> CommandResult {
     let new_user = NewUser {
         opt_out: opt_out,
-        user_id: &msg.author.id.to_string()
+        user_id: &msg.author.id.to_string(),
     };
 
     match db::upsert_user(&new_user) {
-        Ok(_) => { Ok(()) },
-        Err(err) => Err(CommandError::from(err))
+        Ok(_) => Ok(()),
+        Err(err) => Err(CommandError::from(err)),
     }
 }
 
@@ -61,10 +58,13 @@ fn opt_out(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let result = change_user_opt_out(true, msg.author.id.to_string(), msg);
     match result {
         Ok(_) => {
-            msg.channel_id.say(&ctx.http, format!("<@:{}> has successfully opted out.", msg.author.id));
+            msg.channel_id.say(
+                &ctx.http,
+                format!("<@:{}> has successfully opted out.", msg.author.id),
+            );
             Ok(())
-        },
-        Err(err) => Err(err)
+        }
+        Err(err) => Err(err),
     }
 }
 
@@ -73,10 +73,13 @@ fn opt_in(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let result = change_user_opt_out(false, msg.author.id.to_string(), msg);
     match result {
         Ok(_) => {
-            msg.channel_id.say(&ctx.http, format!("<@:{}> has successfully opted in.", msg.author.id));
+            msg.channel_id.say(
+                &ctx.http,
+                format!("<@:{}> has successfully opted in.", msg.author.id),
+            );
             Ok(())
-        },
-        Err(err) => Err(err)
+        }
+        Err(err) => Err(err),
     }
 }
 
@@ -96,7 +99,7 @@ fn ratio_results(ctx: &mut Context, msg: &Message) -> CommandResult {
                 m
             });
             Ok(())
-        },
-        Err(err) => Err(CommandError::from(err))
+        }
+        Err(err) => Err(CommandError::from(err)),
     }
 }

@@ -1,7 +1,7 @@
 use std::{thread, time};
 
-use serenity::http::raw::Http;
 use diesel::{prelude::*, sql_types::*};
+use serenity::http::raw::Http;
 
 #[derive(QueryableByName, PartialEq, Debug)]
 pub struct RatioResult {

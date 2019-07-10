@@ -18,7 +18,7 @@ use serenity::prelude::*;
 
 use crate::{
     errors::*,
-    models::{channel::NewChannel, message::NewMessage, user::NewUser, ratio::RatioResultList},
+    models::{channel::NewChannel, message::NewMessage, ratio::RatioResultList, user::NewUser},
     schema::messages,
 };
 
