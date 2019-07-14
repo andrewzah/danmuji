@@ -28,14 +28,23 @@ mod schema;
 mod tasks;
 mod utils;
 
-use commands::{general::MY_HELP, groups::*};
+use commands::groups::*;
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
 use errors::{AppError, ErrorKind};
 use handler::Handler;
+use models::channel::ChannelId;
 
 struct ShardManagerContainer;
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
+}
+
+struct BotData {
+    pub disabled_channel_ids: Vec<u64>,
+    pub start_time: std::time::Instant,
+}
+impl TypeMapKey for BotData {
+    type Value = Arc<RwLock<BotData>>;
 }
 
 fn init_logging() {
@@ -68,11 +77,17 @@ fn main() {
     let mut client = Client::new(discord_token, Handler).expect("Error creating client");
     {
         let mut data = client.data.write();
+        let bot_data = BotData {
+            disabled_channel_ids: db::disabled_channel_ids()
+                .expect("Unable to load disabled channels!"),
+            start_time: std::time::Instant::now(),
+        };
 
         data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
         data.insert::<db::DbPool>(db::pool());
         data.insert::<DispatcherKey>(Arc::new(RwLock::new(dispatcher)));
         data.insert::<SchedulerKey>(scheduler);
+        data.insert::<BotData>(Arc::new(RwLock::new(bot_data)));
     }
 
     let bot_id = get_bot_id(&client);
@@ -97,8 +112,9 @@ fn main() {
                     AppError::from(err).send_err(&ctx.http, msg, "Unable to run command".into())
                 });
             })
-            .help(&MY_HELP)
+            .help(&HELP)
             .group(&GENERAL_GROUP)
+            .group(&CHANNELS_GROUP)
             .group(&HANGEUL_GROUP)
             .group(&REMIND_ME_GROUP),
     );

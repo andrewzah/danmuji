@@ -68,7 +68,7 @@ fn add_reminder(context: &mut Context, msg: &Message, mut args: Args) -> Command
                 Err(why) => {
                     println!("Error sending message: {:?}.", why);
                     return DateResult::Repeat(Utc::now() + Duration::milliseconds(5000));
-                }
+                },
             };
 
             let http = http.clone();
@@ -87,7 +87,7 @@ fn add_reminder(context: &mut Context, msg: &Message, mut args: Args) -> Command
                 Err(why) => {
                     println!("Error sending message: {:?}.", why);
                     return DateResult::Repeat(Utc::now() + Duration::milliseconds(5000));
-                }
+                },
             };
 
             let http = http.clone();

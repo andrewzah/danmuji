@@ -6,6 +6,9 @@ debug:
 release:
 	@cargo build --release
 
+up:
+	@cargo run
+
 fmt:
 	@cargo +nightly fmt
 

@@ -1,8 +1,9 @@
+binop_separator = "Front"
+comment_width = 95
 imports_indent = "Block"
-merge_imports = true
-reorder_imports = true
 imports_layout = "HorizontalVertical"
 indent_style = "Block"
-binop_separator = "Front"
+match_block_trailing_comma = true
+merge_imports = true
+reorder_imports = true
 wrap_comments = true
-comment_width = 95

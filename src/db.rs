@@ -18,7 +18,12 @@ use serenity::prelude::*;
 
 use crate::{
     errors::*,
-    models::{channel::NewChannel, message::NewMessage, ratio::RatioResultList, user::NewUser},
+    models::{
+        channel::{Channel, ChannelId, ChannelList, NewChannel},
+        message::NewMessage,
+        ratio::RatioResultList,
+        user::NewUser,
+    },
     schema::messages,
 };
 
@@ -69,16 +74,6 @@ pub fn insert_message(nm: NewMessage) -> Result<usize> {
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }
 
-pub fn insert_channel(nc: NewChannel) -> Result<usize> {
-    use crate::schema::channels::dsl::*;
-
-    let conn = pool().get()?;
-    insert_into(channels)
-        .values(&nc)
-        .execute(&conn)
-        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
-}
-
 pub fn upsert_user(nu: &NewUser) -> Result<usize> {
     use crate::schema::users::dsl::*;
 
@@ -92,6 +87,65 @@ pub fn upsert_user(nu: &NewUser) -> Result<usize> {
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }
 
+pub fn upsert_channel(nc: &NewChannel) -> Result<usize> {
+    use crate::schema::channels::dsl::*;
+
+    let conn = pool().get()?;
+    insert_into(channels)
+        .values(nc)
+        .on_conflict(channel_id)
+        .do_update()
+        .set(enabled.eq(nc.enabled))
+        .execute(&conn)
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
+pub fn upsert_channels(ncs: &Vec<NewChannel>, new_enabled: bool) -> Result<usize> {
+    use crate::schema::channels::dsl::*;
+
+    let conn = pool().get()?;
+    insert_into(channels)
+        .values(ncs)
+        .on_conflict(channel_id)
+        .do_update()
+        .set(enabled.eq(new_enabled))
+        .execute(&conn)
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
+pub fn all_channels() -> Result<ChannelList> {
+    use crate::schema::channels::dsl::*;
+
+    let conn = pool().get()?;
+    channels
+        .load::<Channel>(&conn)
+        .map(|list| ChannelList::new(list))
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
+}
+
+pub fn disabled_channel_ids() -> Result<Vec<u64>> {
+    use crate::schema::channels::dsl::*;
+
+    let conn = pool().get()?;
+    let results = channels
+        .select(channel_id)
+        .filter(enabled.eq(false))
+        .load::<String>(&conn)
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)));
+
+    match results {
+        Ok(c_ids) => {
+            let ids = c_ids
+                .into_iter()
+                .map(|c_id| c_id.parse::<u64>().expect("Unable to parse channel id!"))
+                .collect();
+            info!("ids: {:?}", &ids);
+            Ok(ids)
+        },
+        Err(err) => Err(err),
+    }
+}
+
 // ---------------- SQL QUERIES ----------------------
 
 pub fn get_ratio_list() -> Result<RatioResultList> {
@@ -103,6 +157,6 @@ pub fn get_ratio_list() -> Result<RatioResultList> {
     let results = sql_query(sql).load(&conn);
 
     results
-        .map(|list| RatioResultList::from_list(list))
+        .map(|list| RatioResultList::new(list))
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }

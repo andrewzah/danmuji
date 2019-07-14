@@ -65,7 +65,7 @@ fn populate_users(ctx: &Context) {
             Err(err) => {
                 error!("Unable to get ratio list: {}", err);
                 return DateResult::Repeat(Utc::now() + interval);
-            }
+            },
         };
 
         let channel_id = ChannelId(chan_id);

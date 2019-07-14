@@ -11,7 +11,7 @@ impl AppError {
         AppError(Box::new(kind))
     }
 
-    pub(crate) fn from_string(msg: &str) -> AppError {
+    pub(crate) fn from_str(msg: &str) -> AppError {
         AppError(Box::new(ErrorKind::Generic(msg.into())))
     }
 
@@ -55,11 +55,24 @@ impl fmt::Display for AppError {
     }
 }
 
+impl fmt::Debug for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self.0 {
+            ErrorKind::Generic(ref msg) => write!(f, "Generic error: {}", msg),
+            ErrorKind::R2D2(ref err) => err.fmt(f),
+            ErrorKind::DbResult(ref err) => err.fmt(f),
+            ErrorKind::Regex(ref err) => err.fmt(f),
+            ErrorKind::IO(ref err) => err.fmt(f),
+            ErrorKind::Serenity(ref err) => err.fmt(f),
+        }
+    }
+}
+
 impl AppError {
     pub fn send_err(&self, http: &Http, msg: &Message, why: String) -> Result<Message> {
         msg.channel_id
             .send_message(&http, |m| {
-                m.embed(|mut e| {
+                m.embed(|e| {
                     e.title("Error");
                     e.description(format!(":x: {}: {}", why, *self));
 

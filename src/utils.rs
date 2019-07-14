@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use log::{debug, info};
 use regex::Regex;
 
@@ -13,7 +14,15 @@ const JAMO_END: u32 = 0x11FF;
 const COMPAT_JAMO_START: u32 = 0x3130;
 const COMPAT_JAMO_END: u32 = 0x318F;
 
-const REGEX: &str = r"[\s\d\W]";
+const NON_CHAR_REGEXP: &str = r"[\s\d\W]";
+const CHANNEL_REGEXP: &str = r"<#(?P<i>\d+)>";
+
+lazy_static! {
+    static ref NON_CHAR_REGEX: Regex =
+        Regex::new(NON_CHAR_REGEXP).expect("Unable to init non_char_regex!");
+    static ref CHANNEL_REGEX: Regex =
+        Regex::new(CHANNEL_REGEXP).expect("Unable to init channel_regex!");
+}
 
 #[allow(dead_code)]
 pub fn is_hangeul(c: char) -> bool {
@@ -29,8 +38,7 @@ pub fn is_hangeul(c: char) -> bool {
 }
 
 pub fn strip_content(content: &str) -> Result<String> {
-    let re = Regex::new(REGEX)?;
-    Ok(re.replace_all(content, "").to_string())
+    Ok(NON_CHAR_REGEX.replace_all(content, "").to_string())
 }
 
 pub fn parse_content(content: &str) -> Result<(i32, i32, i32)> {
@@ -49,4 +57,27 @@ pub fn parse_content(content: &str) -> Result<(i32, i32, i32)> {
     }
 
     Ok((hangeul, non_hangeul, non_hangeul + hangeul))
+}
+
+pub fn format_seconds(secs: u64) -> String {
+    let weeks = secs / 604800;
+    let days = (secs % 604800) / 86400;
+    let hours = ((secs % 604800) % 86400) / 3600;
+    let minutes = (((secs % 604800) % 86400) % 3600) / 60;
+    let seconds = (((secs % 604800) % 86400) % 3600) % 60;
+
+    format!(
+        "{}w, {}d, {}h, {}m, {}s",
+        weeks, days, hours, minutes, seconds
+    )
+}
+
+/// Gets rid of `#` in discord input for channel names.
+/// ex format) <#500851614362370080> <#500853945342623787>
+pub fn format_channels(input: String) -> Result<Vec<String>> {
+    Ok(CHANNEL_REGEX
+        .replace_all(&input, "$i")
+        .split(" ")
+        .map(|s| String::from(s))
+        .collect())
 }

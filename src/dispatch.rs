@@ -34,7 +34,7 @@ impl Hash for DispatchEvent {
             DispatchEvent::ReactEvent(msg_id, user_id) => {
                 msg_id.hash(state);
                 user_id.hash(state);
-            }
+            },
         }
     }
 }

@@ -29,10 +29,11 @@ pub struct RatioResultList {
 }
 
 impl RatioResultList {
-    pub fn from_list(list: Vec<RatioResult>) -> RatioResultList {
+    pub fn new(list: Vec<RatioResult>) -> RatioResultList {
         RatioResultList { list }
     }
 
+    // TODO: cache
     pub fn pretty_print(&self, http: &Http) -> String {
         let mut result = String::new();
         result.push_str("Ratio Results:\n");
