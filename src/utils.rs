@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use log::{debug, info};
+use rayon::prelude::*;
 use regex::Regex;
 
 use crate::{
@@ -26,14 +27,15 @@ lazy_static! {
 
 #[allow(dead_code)]
 pub fn is_hangeul(c: char) -> bool {
-    let char = c as u32;
-    if char >= SYLLABLE_START && char <= SYLLABLE_END {
+    let byte = c as u32;
+    if byte >= SYLLABLE_START && byte <= SYLLABLE_END {
         return true;
-    } else if char >= JAMO_START && char <= JAMO_END {
+    } else if byte >= JAMO_START && byte <= JAMO_END {
         return true;
-    } else if char >= COMPAT_JAMO_START && char <= COMPAT_JAMO_END {
+    } else if byte >= COMPAT_JAMO_START && byte <= COMPAT_JAMO_END {
         return true;
     }
+
     return false;
 }
 
@@ -42,21 +44,17 @@ pub fn strip_content(content: &str) -> Result<String> {
 }
 
 pub fn parse_content(content: &str) -> Result<(i32, i32, i32)> {
-    let mut non_hangeul = 0;
-    let mut hangeul = 0;
-    let blocks = utils::strip_content(content)?;
+    let stripped = utils::strip_content(content)?;
 
-    for block in blocks.split("") {
-        for character in block.chars() {
-            if utils::is_hangeul(character) {
-                hangeul += 1;
-            } else {
-                non_hangeul += 1;
-            }
-        }
-    }
+    let (hangeul_chars, non_hangeul_chars): (Vec<char>, Vec<char>) =
+        stripped
+            .par_chars()
+            .partition(|c| is_hangeul(*c));
 
-    Ok((hangeul, non_hangeul, non_hangeul + hangeul))
+    let hc = hangeul_chars.len() as i32;
+    let nc = non_hangeul_chars.len() as i32;
+
+    Ok((hc, nc, hc + nc))
 }
 
 pub fn format_seconds(secs: u64) -> String {
@@ -80,4 +78,36 @@ pub fn format_channels(input: String) -> Result<Vec<String>> {
         .split(" ")
         .map(|s| String::from(s))
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::{Bencher, black_box};
+
+    #[test]
+    fn it_parses_chars_correctly() {
+        assert_eq!(
+            (2,2,4), parse_content("ㅁㅁnn").unwrap()
+        );
+    }
+
+    #[test]
+    fn it_parses_chars_with_punctuation() {
+        assert_eq!(
+            (2,2,4), parse_content("ㅁ!ㅁ!n @)(*%n").unwrap()
+        );
+    }
+
+    #[test]
+    fn it_parses_max_length_str() {
+        let mut content = String::new();
+        for _ in 0..1000 {
+            content.push_str("만a");
+        }
+
+        assert_eq!(
+            (1000,1000,2000), parse_content(&content).unwrap()
+        );
+    }
 }

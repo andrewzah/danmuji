@@ -1,9 +1,12 @@
+#![feature(test)]
+
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
 #[macro_use]
 extern crate diesel;
+extern crate test;
 
 use std::{env, sync::Arc};
 

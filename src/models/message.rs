@@ -43,6 +43,7 @@ pub struct NewMessage {
 impl NewMessage {
     pub fn from_msg(msg: SerenityMessage) -> Result<NewMessage> {
         let (hc, nhc, rc) = utils::parse_content(&msg.content)?;
+
         Ok(NewMessage {
             message_id: msg.id.to_string(),
             guild_id: msg.guild_id.unwrap_or(GuildId(0_u64)).to_string(),

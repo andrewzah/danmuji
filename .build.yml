@@ -8,6 +8,5 @@ sources:
 tasks:
   - test: |
       cd danmuji
-      cargo fmt --all -- --check
       cargo build
       cargo test
