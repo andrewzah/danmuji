@@ -1,12 +1,9 @@
-#![feature(test)]
-
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
 #[macro_use]
 extern crate diesel;
-extern crate test;
 
 use std::{env, sync::Arc};
 
@@ -31,7 +28,12 @@ mod schema;
 mod tasks;
 mod utils;
 
-use commands::groups::*;
+use commands::{
+    channels::CHANNELS_GROUP,
+    general::{GENERAL_GROUP, HELP},
+    hangeul::HANGEUL_GROUP,
+    reminders::REMIND_ME_GROUP,
+};
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
 use errors::{AppError, ErrorKind};
 use handler::Handler;

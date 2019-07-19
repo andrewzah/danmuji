@@ -47,9 +47,7 @@ pub fn parse_content(content: &str) -> Result<(i32, i32, i32)> {
     let stripped = utils::strip_content(content)?;
 
     let (hangeul_chars, non_hangeul_chars): (Vec<char>, Vec<char>) =
-        stripped
-            .par_chars()
-            .partition(|c| is_hangeul(*c));
+        stripped.par_chars().partition(|c| is_hangeul(*c));
 
     let hc = hangeul_chars.len() as i32;
     let nc = non_hangeul_chars.len() as i32;
@@ -83,20 +81,16 @@ pub fn format_channels(input: String) -> Result<Vec<String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{Bencher, black_box};
+    use test::{black_box, Bencher};
 
     #[test]
     fn it_parses_chars_correctly() {
-        assert_eq!(
-            (2,2,4), parse_content("ㅁㅁnn").unwrap()
-        );
+        assert_eq!((2, 2, 4), parse_content("ㅁㅁnn").unwrap());
     }
 
     #[test]
     fn it_parses_chars_with_punctuation() {
-        assert_eq!(
-            (2,2,4), parse_content("ㅁ!ㅁ!n @)(*%n").unwrap()
-        );
+        assert_eq!((2, 2, 4), parse_content("ㅁ!ㅁ!n @)(*%n").unwrap());
     }
 
     #[test]
@@ -106,8 +100,6 @@ mod tests {
             content.push_str("만a");
         }
 
-        assert_eq!(
-            (1000,1000,2000), parse_content(&content).unwrap()
-        );
+        assert_eq!((1000, 1000, 2000), parse_content(&content).unwrap());
     }
 }

@@ -3,7 +3,7 @@ use serenity::{
     client::Context,
     framework::standard::{
         help_commands,
-        macros::{command, help},
+        macros::{command, group, help},
         Args,
         CommandError,
         CommandGroup,
@@ -17,13 +17,24 @@ use serenity::{
 };
 
 use crate::{
-    commands::groups::*,
     db,
     errors::{AppError, ErrorKind, Result},
     models::{channel::NewChannel, user::NewUser},
     utils,
     BotData,
 };
+
+group!({
+    name: "channels",
+    options: {
+        prefixes: ["chan", "c"],
+    },
+    commands: [
+        list, enable,
+        disable, disable_all,
+        enable_all,
+    ],
+});
 
 /// Lists all enabled or disabled channels for a guild.
 #[command]

@@ -12,13 +12,23 @@ use hey_listen::sync::{
 use log::info;
 use serenity::{
     client::Context,
-    framework::standard::{macros::command, Args, CommandResult},
+    framework::standard::{
+        macros::{command, group, help},
+        Args,
+        CommandResult,
+    },
     http::Http,
     model::prelude::*,
 };
 use white_rabbit::{DateResult, Duration, Scheduler, Utc};
 
 use crate::dispatch::*;
+
+group!({
+    name: "remind_me",
+    options: {},
+    commands: [add],
+});
 
 fn thanks_for_reacting(
     http: Arc<Http>,
@@ -34,8 +44,7 @@ fn thanks_for_reacting(
 }
 
 #[command]
-#[aliases("add")]
-fn add_reminder(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+fn add(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let name: String = args.single()?;
     let time: u64 = args.single()?;
     let repeat: bool = args.single()?;

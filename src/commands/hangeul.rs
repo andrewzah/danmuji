@@ -3,7 +3,7 @@ use serenity::{
     client::Context,
     framework::standard::{
         help_commands,
-        macros::{command, help},
+        macros::{command, group, help},
         Args,
         CommandError,
         CommandGroup,
@@ -14,11 +14,20 @@ use serenity::{
 };
 
 use crate::{
-    commands::groups::*,
     db,
     models::{channel::NewChannel, user::NewUser},
     BotData,
 };
+
+group!({
+    name: "hangeul",
+    options: {
+        prefixes: ["hangeul", "hangul", "h"],
+    },
+    commands: [
+        opt_in, opt_out, ratio_results
+    ],
+});
 
 #[command]
 fn ratio(ctx: &mut Context, msg: &Message) -> CommandResult {
