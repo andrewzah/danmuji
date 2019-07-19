@@ -19,7 +19,7 @@ use serenity::{
 use crate::{
     db,
     errors::{AppError, ErrorKind, Result},
-    models::{channel::NewChannel, user::NewUser},
+    models::reply::{NewReply,Reply},
     utils,
     BotData,
 };
@@ -29,9 +29,35 @@ group!({
     options: {
         prefixes: ["r"],
     },
-    commands: [ ]
+    commands: [get, set]
 });
 
-// --------------------------------------------------------------------
-// ---------------------------- helpers -------------------------------
-// --------------------------------------------------------------------
+#[command]
+fn set(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+    let tag: String = args.single()?;
+    let url: String = args.single()?;
+    let reply = NewReply { tag: &tag, url: &url };
+
+    match db::upsert_reply(&reply) {
+        Ok(_) => {
+            let message = format!("Sucessfully set tag {}.", tag);
+            let _ = msg.channel_id.say(&ctx, &message);
+            Ok(())
+        },
+        Err(e) => Err(CommandError::from(e))
+    }
+}
+
+#[command]
+fn get(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+    let tag: String = args.single()?;
+
+    match db::get_reply(&tag) {
+        Ok(reply) => {
+            let message = format!("Found tag `{}`: {}", tag, reply.url);
+            let _ = msg.reply(&ctx, &message);
+            Ok(())
+        },
+        Err(e) => Err(CommandError::from(e))
+    }
+}

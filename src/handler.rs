@@ -10,19 +10,20 @@ impl EventHandler for Handler {
     fn ready(&self, ctx: Context, ready: Ready) {
         info!("{} is connected!", ready.user.name);
         ctx.set_activity(Activity::playing("danmuji.andrewzah.com"));
+        //TODO - finish up scheduled tasks/etc
         //tasks::init_tasks(&ctx);
         info!("Finished initializing startup tasks!");
     }
 
     fn message(&self, ctx: Context, msg: Message) {
-        if message_filter(&ctx, &msg) {
-            return;
+        if message_filter(&ctx, &msg) == false {
+            match NewMessage::from_msg(&msg) {
+                Ok(message) => message.insert(),
+                Err(err) => error!("err creating msg: {}", err),
+            }
         };
 
-        match NewMessage::from_msg(msg) {
-            Ok(msg) => msg.insert(),
-            Err(err) => error!("err creating msg: {}", err),
-        }
+        check_reply(&ctx, &msg);
     }
 
     fn resume(&self, _: Context, resume: ResumedEvent) {
@@ -72,6 +73,11 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
         return true;
     }
 
+    // ignore reply commands
+    if msg.content.starts_with(">") {
+        return true;
+    }
+
     // ignore other command messages
     if let Some(c) = msg.content.chars().next() {
         if c.is_ascii_punctuation() {
@@ -80,4 +86,14 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
     }
 
     false
+}
+
+fn check_reply(ctx: &Context, msg: &Message) {
+    if msg.content.starts_with(">") {
+        if let Some(tag) = utils::parse_tag(&msg.content) {
+            if let Some(reply) =  db::get_reply(&tag).ok() {
+                msg.channel_id.say(&ctx, &reply.url);
+            }
+        }
+    };
 }

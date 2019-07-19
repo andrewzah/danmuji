@@ -12,6 +12,7 @@ pub struct Channel {
     pub enabled: bool,
 }
 
+// TODO: is changeset needed?
 #[derive(AsChangeset, Insertable, Debug)]
 #[table_name = "channels"]
 pub struct NewChannel {

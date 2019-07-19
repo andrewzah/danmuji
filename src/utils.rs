@@ -17,12 +17,15 @@ const COMPAT_JAMO_END: u32 = 0x318F;
 
 const NON_CHAR_REGEXP: &str = r"[\s\d\W]";
 const CHANNEL_REGEXP: &str = r"<#(?P<i>\d+)>";
+const TAG_REGEXP: &str = r">(?P<t>[\w\d\-_]+)";
 
 lazy_static! {
     static ref NON_CHAR_REGEX: Regex =
         Regex::new(NON_CHAR_REGEXP).expect("Unable to init non_char_regex!");
     static ref CHANNEL_REGEX: Regex =
         Regex::new(CHANNEL_REGEXP).expect("Unable to init channel_regex!");
+    static ref TAG_REGEX: Regex =
+        Regex::new(TAG_REGEXP).expect("Unable to init tag_regex!");
 }
 
 #[allow(dead_code)]
@@ -53,6 +56,13 @@ pub fn parse_content(content: &str) -> Result<(i32, i32, i32)> {
     let nc = non_hangeul_chars.len() as i32;
 
     Ok((hc, nc, hc + nc))
+}
+
+pub fn parse_tag(content: &str) -> Option<&str> {
+    TAG_REGEX
+        .captures(content)?
+        .get(1)
+        .map(|m| m.as_str())
 }
 
 pub fn format_seconds(secs: u64) -> String {

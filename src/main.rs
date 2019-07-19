@@ -33,6 +33,7 @@ use commands::{
     general::{GENERAL_GROUP, HELP},
     hangeul::HANGEUL_GROUP,
     reminders::REMIND_ME_GROUP,
+    replies::REPLIES_GROUP,
 };
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
 use errors::{AppError, ErrorKind};
@@ -121,7 +122,8 @@ fn main() {
             .group(&GENERAL_GROUP)
             .group(&CHANNELS_GROUP)
             .group(&HANGEUL_GROUP)
-            .group(&REMIND_ME_GROUP),
+            .group(&REMIND_ME_GROUP)
+            .group(&REPLIES_GROUP)
     );
 
     if let Err(why) = client.start() {

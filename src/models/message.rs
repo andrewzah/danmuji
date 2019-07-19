@@ -41,7 +41,7 @@ pub struct NewMessage {
 }
 
 impl NewMessage {
-    pub fn from_msg(msg: SerenityMessage) -> Result<NewMessage> {
+    pub fn from_msg(msg: &SerenityMessage) -> Result<NewMessage> {
         let (hc, nhc, rc) = utils::parse_content(&msg.content)?;
 
         Ok(NewMessage {

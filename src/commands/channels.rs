@@ -49,7 +49,7 @@ fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
         .say(&ctx.http, channel_list.pretty_print(&ctx.http))
     {
         Ok(_) => {
-            info!("test");
+            info!("TODO");
             Ok(())
         },
         Err(err) => Err(CommandError::from(err)),

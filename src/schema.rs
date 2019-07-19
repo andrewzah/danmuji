@@ -29,6 +29,14 @@ table! {
 }
 
 table! {
+    replies (id) {
+        id -> Int4,
+        tag -> Text,
+        url -> Text,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         user_id -> Varchar,
@@ -36,4 +44,10 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(channels, guilds, messages, users,);
+allow_tables_to_appear_in_same_query!(
+    channels,
+    guilds,
+    messages,
+    replies,
+    users,
+);
