@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  danmuji:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: always
+    env_file:
+      - .env
+      - .prod.env
+
+  danmuji_db:
+    image: postgres:9.6.7-alpine
+    env_file:
+      - .prod.env
+    restart: always
+    ports:
+      - "5432"

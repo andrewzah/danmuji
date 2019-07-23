@@ -3,10 +3,18 @@ name = "danmuji"
 version = "0.1.0"
 authors = ["Andrew Zah <zah@andrewzah.com>"]
 edition = "2018"
+build = false
+description = "A discord bot written in Rust."
+license = "GPL-3.0-only"
+
+[[bin]]
+name = "danmuji"
+path = "src/main.rs"
 
 [dependencies]
 chrono = "0.4.7"
 diesel = { version = "1.4", features = ["chrono", "r2d2", "postgres"] }
+diesel_migrations = "1.4"
 dotenv = "0.14.1"
 env_logger = "0.6"
 hey_listen = "0.4"

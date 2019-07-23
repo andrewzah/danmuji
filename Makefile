@@ -9,6 +9,18 @@ release:
 up:
 	@cargo run
 
+docker:
+	docker build -f docker/Dockerfile-alpine-rust docker -t andrewzah/alpine-rust
+	docker build -f docker/Dockerfile . -t andrewzah/danmuji
+
+docker-clean:
+	docker build -f docker/Dockerfile-alpine-rust docker -t andrewzah/alpine-rust --no-cache
+	docker build -f docker/Dockerfile . -t andrewzah/danmuji --no-cache
+
+docker-push:
+	docker push andrewzah/alpine-rust
+	docker push andrewzah/danmuji
+
 fmt:
 	@cargo +nightly fmt
 

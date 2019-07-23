@@ -1,0 +1,23 @@
+FROM debian:stretch-slim
+MAINTAINER Andrew Zah <zah@andrewzah.com>
+
+ENV BUILD_PACKAGES curl libpq-dev build-essential
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+RUN mkdir /out \
+  && apt-get update \
+  && apt-get install -y $BUILD_PACKAGES \
+  && curl https://sh.rustup.rs/ -sSf | \
+    sh -s -- -y --default-toolchain stable \
+  && cargo install diesel_cli --no-default-features --features postgres \
+  && mv /root/.cargo/bin/diesel /out \
+  && apt clean \
+  && apt remove -y \
+    $BUILD_PACKAGES \
+  && apt remove --purge curl libpq-dev -y \
+  && apt autoremove -y \
+  && rm -rf /var/lib/apt/lists/* \
+  && rustup self uninstall -y
+
+# vim: set syntax=dockerfile:

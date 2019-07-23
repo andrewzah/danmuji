@@ -4,12 +4,15 @@
 
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 
 use std::{env, sync::Arc};
 
+use diesel_migrations::{embed_migrations, run_pending_migrations};
 use dotenv::dotenv;
 use hey_listen::sync::ParallelDispatcher as Dispatcher;
-use log::error;
+use log::{info, error};
 use serenity::{
     client::bridge::gateway::ShardManager,
     framework::standard::{DispatchError, StandardFramework},
@@ -53,6 +56,13 @@ impl TypeMapKey for BotData {
     type Value = Arc<RwLock<BotData>>;
 }
 
+fn migrate() {
+    // run before to fully migrate
+    let conn = db::pool().clone().get()
+        .expect("Unable to get db connection on migrate startup!!");
+    embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
+}
+
 fn init_logging() {
     let mut builder = env_logger::Builder::from_default_env();
     builder.target(env_logger::Target::Stdout);
@@ -66,11 +76,15 @@ fn get_bot_id(client: &Client) -> UserId {
     }
 }
 
+embed_migrations!("./migrations");
+
 fn main() {
     dotenv().ok();
     init_logging();
+    migrate();
 
-    let discord_token = &env::var("DISCORD_TOKEN").expect("Is DISCORD_TOKEN set?");
+    let discord_token = &env::var("DISCORD_TOKEN")
+        .expect("Is DISCORD_TOKEN set?");
 
     let scheduler = Scheduler::new(4);
     let scheduler = Arc::new(RwLock::new(scheduler));
@@ -81,18 +95,19 @@ fn main() {
         .expect("Could not construct dispatcher threadpool");
 
     let mut client = Client::new(discord_token, Handler).expect("Error creating client");
+
     {
         let mut data = client.data.write();
+        data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
+        data.insert::<db::DbPool>(db::pool());
+        data.insert::<DispatcherKey>(Arc::new(RwLock::new(dispatcher)));
+        data.insert::<SchedulerKey>(scheduler);
+
         let bot_data = BotData {
             disabled_channel_ids: db::disabled_channel_ids()
                 .expect("Unable to load disabled channels!"),
             start_time: std::time::Instant::now(),
         };
-
-        data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
-        data.insert::<db::DbPool>(db::pool());
-        data.insert::<DispatcherKey>(Arc::new(RwLock::new(dispatcher)));
-        data.insert::<SchedulerKey>(scheduler);
         data.insert::<BotData>(Arc::new(RwLock::new(bot_data)));
     }
 

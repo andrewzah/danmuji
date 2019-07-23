@@ -1,0 +1,10 @@
+# edge is needed for rust 1.36.0
+FROM alpine:edge
+MAINTAINER Andrew Zah <zah@andrewzah.com>
+
+RUN apk update \
+  && apk upgrade \
+  && apk add rust cargo \
+  && rm -rf /var/cache/apk/*
+
+# vim: set syntax=dockerfile:

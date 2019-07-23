@@ -48,14 +48,13 @@ fn init_pool(db_url: &str) -> Pool {
     let manager = ConnectionManager::<PgConnection>::new(db_url);
 
     let r2d2_pool = r2d2::Pool::builder()
-        .max_size(1)
+        .max_size(4)
         .connection_timeout(Duration::from_secs(60))
         .build(manager)
         .expect("Unable to build pool!");
 
     let pool = Arc::new(r2d2_pool);
 
-    info!("Database pool initialized!");
     pool
 }
 
@@ -141,7 +140,6 @@ pub fn disabled_channel_ids() -> Result<Vec<u64>> {
                 .into_iter()
                 .map(|c_id| c_id.parse::<u64>().expect("Unable to parse channel id!"))
                 .collect();
-            info!("ids: {:?}", &ids);
             Ok(ids)
         },
         Err(err) => Err(err),
