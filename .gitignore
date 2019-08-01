@@ -1,5 +1,11 @@
+dive.log
 *.env
 .DS_Store
+
+
+Cargo.nix
+crates-io.*
+result
 
 danmuji
 

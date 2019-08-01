@@ -32,6 +32,7 @@ COPY --from=build /build/target/release/danmuji .
 
 RUN apk add --update libgcc postgresql-dev
 COPY ./migrations /build/migrations
+COPY ./sql /app/sql
 
 USER danmuji_user
 CMD ["/app/danmuji"]
