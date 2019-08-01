@@ -29,7 +29,7 @@ group!({
     options: {
         prefixes: ["r"],
     },
-    commands: [get, set]
+    commands: [list, set]
 });
 
 #[command]
@@ -49,13 +49,20 @@ fn set(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
 }
 
 #[command]
-fn get(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
-    let tag: String = args.single()?;
+fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
+    match db::get_replies() {
+        Ok(reply_list) => {
+            msg.channel_id
+                .send_message(&ctx.http, |m| {
+                    m.embed(|e| {
+                        e.title("Replies");
+                        e.description(reply_list.pretty_print());
 
-    match db::get_reply(&tag) {
-        Ok(reply) => {
-            let message = format!("Found tag `{}`: {}", tag, reply.url);
-            let _ = msg.reply(&ctx, &message);
+                        e
+                    });
+
+                    m
+            });
             Ok(())
         },
         Err(e) => Err(CommandError::from(e))

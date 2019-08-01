@@ -23,7 +23,7 @@ use crate::{
         message::NewMessage,
         ratio::RatioResultList,
         user::NewUser,
-        reply::{NewReply, Reply},
+        reply::{NewReply, Reply, ReplyList},
     },
     schema::messages,
 };
@@ -144,6 +144,15 @@ pub fn disabled_channel_ids() -> Result<Vec<u64>> {
         },
         Err(err) => Err(err),
     }
+}
+
+pub fn get_replies() -> Result<ReplyList> {
+    use crate::schema::replies::dsl::*;
+
+    let conn = pool().get()?;
+    replies.load::<Reply>(&conn)
+        .map(|list| ReplyList::new(list))
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
 }
 
 pub fn get_reply(input: &str) -> Result<Reply> {

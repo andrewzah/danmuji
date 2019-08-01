@@ -15,3 +15,23 @@ pub struct NewReply<'a> {
     pub tag: &'a str,
     pub url: &'a str,
 }
+
+pub struct ReplyList {
+    list: Vec<Reply>,
+}
+
+impl ReplyList {
+    pub fn new(list: Vec<Reply>) -> ReplyList {
+        ReplyList { list }
+    }
+
+    // TODO: cache/get name
+    pub fn pretty_print(self) -> String {
+        let tags = self.list
+            .into_iter()
+            .map(|r| r.tag)
+            .collect::<Vec<String>>();
+
+        tags.join(", ")
+    }
+}
