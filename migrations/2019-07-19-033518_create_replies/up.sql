@@ -5,5 +5,3 @@ CREATE TABLE replies (
   tag TEXT UNIQUE NOT NULL,
   url TEXT NOT NULL
 );
-
-CREATE INDEX tag ON replies (tag);

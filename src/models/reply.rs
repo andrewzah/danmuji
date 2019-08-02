@@ -7,6 +7,7 @@ pub struct Reply {
     pub id: i32,
     pub tag: String,
     pub url: String,
+    pub guild_id: String,
 }
 
 #[derive(Insertable, Debug)]
@@ -14,6 +15,7 @@ pub struct Reply {
 pub struct NewReply<'a> {
     pub tag: &'a str,
     pub url: &'a str,
+    pub guild_id: &'a str,
 }
 
 pub struct ReplyList {

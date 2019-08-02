@@ -89,11 +89,14 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
 }
 
 fn check_reply(ctx: &Context, msg: &Message) {
-    if msg.content.starts_with(">") {
-        if let Some(tag) = utils::parse_tag(&msg.content) {
-            if let Some(reply) =  db::get_reply(&tag).ok() {
-                msg.channel_id.say(&ctx, &reply.url);
+    if let Some(guild_id) = msg.guild_id {
+        if msg.content.starts_with(">") {
+            if let Some(tag) = utils::parse_tag(&msg.content) {
+                if let Some(reply) = db::get_reply(&tag, &guild_id.to_string()).ok() {
+                    info!("reply: {:?}", &reply);
+                    msg.channel_id.say(&ctx, &reply.url);
+                }
             }
-        }
-    };
+        };
+    }
 }

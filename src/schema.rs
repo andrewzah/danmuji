@@ -33,6 +33,7 @@ table! {
         id -> Int4,
         tag -> Text,
         url -> Text,
+        guild_id -> Varchar,
     }
 }
 

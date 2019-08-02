@@ -146,21 +146,23 @@ pub fn disabled_channel_ids() -> Result<Vec<u64>> {
     }
 }
 
-pub fn get_replies() -> Result<ReplyList> {
-    use crate::schema::replies::dsl::*;
-
-    let conn = pool().get()?;
-    replies.load::<Reply>(&conn)
-        .map(|list| ReplyList::new(list))
-        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
-}
-
-pub fn get_reply(input: &str) -> Result<Reply> {
+pub fn get_replies(gid: &str) -> Result<ReplyList> {
     use crate::schema::replies::dsl::*;
 
     let conn = pool().get()?;
     replies
-        .filter(tag.eq(input))
+        .filter(guild_id.eq(gid))
+        .load::<Reply>(&conn)
+        .map(|list| ReplyList::new(list))
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
+}
+
+pub fn get_reply(keyword: &str, gid: &str) -> Result<Reply> {
+    use crate::schema::replies::dsl::*;
+
+    let conn = pool().get()?;
+    replies
+        .filter(guild_id.eq(gid).and(tag.eq(keyword)))
         .get_result::<Reply>(&conn)
         .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
 }
@@ -171,11 +173,20 @@ pub fn upsert_reply(reply: &NewReply) -> Result<usize> {
     let conn = pool().get()?;
     insert_into(replies)
         .values(reply)
-        .on_conflict(tag)
+        .on_conflict((guild_id, tag))
         .do_update()
         .set(url.eq(reply.url))
         .execute(&conn)
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
+pub fn delete_reply(keyword: &str, gid: &str) -> Result<usize> {
+    use crate::schema::replies::dsl::*;
+
+    let conn = pool().get()?;
+    diesel::delete(replies.filter(guild_id.eq(gid).and(tag.eq(keyword))))
+        .execute(&conn)
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
 }
 
 // ---------------- SQL QUERIES ----------------------

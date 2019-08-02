@@ -29,14 +29,24 @@ group!({
     options: {
         prefixes: ["r"],
     },
-    commands: [list, set]
+    commands: [list, set, delete]
 });
 
 #[command]
 fn set(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let tag: String = args.single()?;
     let url: String = args.single()?;
-    let reply = NewReply { tag: &tag, url: &url };
+
+    let guild_id = msg.guild_id.ok_or("Replies don't work in direct messages.")?;
+    info!("gid: {}", &guild_id);
+
+    let reply = NewReply {
+        guild_id: &guild_id.to_string(),
+        tag: &tag,
+        url: &url
+    };
+
+    info!("new: {:?}", &reply);
 
     match db::upsert_reply(&reply) {
         Ok(_) => {
@@ -50,7 +60,9 @@ fn set(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
 
 #[command]
 fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
-    match db::get_replies() {
+    let guild_id = msg.guild_id.ok_or("Replies don't work in direct messages.")?;
+
+    match db::get_replies(&guild_id.to_string()) {
         Ok(reply_list) => {
             msg.channel_id
                 .send_message(&ctx.http, |m| {
@@ -63,6 +75,24 @@ fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
 
                     m
             });
+            Ok(())
+        },
+        Err(e) => Err(CommandError::from(e))
+    }
+}
+
+#[command]
+#[aliases("del")]
+fn delete(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+    let guild_id = msg.guild_id.ok_or("Replies don't work in direct messages.")?;
+    let tag: String = args.single()?;
+
+    match db::delete_reply(&tag, &guild_id.to_string()) {
+        Ok(result) => {
+            match result {
+                0 => msg.reply(&ctx, "Nothing to delete."),
+                _ => msg.reply(&ctx, "Deleted reply.")
+            };
             Ok(())
         },
         Err(e) => Err(CommandError::from(e))
