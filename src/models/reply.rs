@@ -27,13 +27,34 @@ impl ReplyList {
         ReplyList { list }
     }
 
-    // TODO: cache/get name
-    pub fn pretty_print(self) -> String {
+    pub fn pretty_print(mut self) -> String {
+        self.list.sort_by(|a, b| a.tag.to_lowercase().cmp(&b.tag.to_lowercase()));
+
         let tags = self.list
             .into_iter()
             .map(|r| r.tag)
             .collect::<Vec<String>>();
 
         tags.join(", ")
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_sorts_replies() {
+        let reply_list = ReplyList {
+            list: vec![
+                Reply { id: 0, tag: "deem".into(), url: "".into(), guild_id: "".into() },
+                Reply { id: 1, tag: "deft".into(), url: "".into(), guild_id: "".into() },
+                Reply { id: 2, tag: "deer".into(), url: "".into(), guild_id: "".into() },
+                Reply { id: 3, tag: "defm".into(), url: "".into(), guild_id: "".into() },
+            ]
+        };
+
+        assert_eq!("deem, deer, defm, deft", reply_list.pretty_print());
     }
 }
