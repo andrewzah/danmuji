@@ -14,6 +14,7 @@ use serenity::{
 };
 
 use crate::{
+    checks::*,
     db,
     models::{channel::NewChannel, user::NewUser},
     BotData,
@@ -25,7 +26,8 @@ group!({
         prefixes: ["hangeul", "hangul", "h"],
     },
     commands: [
-        opt_in, opt_out, ratio_results
+        opt_in, opt_out, ratio_results,
+        reset_guild, reset_all
     ],
 });
 
@@ -98,3 +100,30 @@ fn ratio_results(ctx: &mut Context, msg: &Message) -> CommandResult {
         Err(err) => Err(CommandError::from(err)),
     }
 }
+
+#[command]
+#[checks(Admin)]
+fn reset_guild(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let guild_id = msg.guild_id.ok_or("Replies don't work in direct messages.")?;
+
+    match db::delete_guild_messages(&guild_id.to_string()) {
+        Ok(count) => {
+            msg.channel_id.say(&ctx.http, format!("Cleared {} messages from this guild.", count));
+            Ok(())
+        },
+        Err(err) => Err(CommandError::from(err)),
+    }
+}
+
+#[command]
+#[checks(Owner)]
+fn reset_all(ctx: &mut Context, msg: &Message) -> CommandResult {
+    match db::delete_all_messages() {
+        Ok(count) => {
+            msg.channel_id.say(&ctx.http, format!("Cleared {} messages from all guilds.", count));
+            Ok(())
+        },
+        Err(err) => Err(CommandError::from(err)),
+    }
+}
+

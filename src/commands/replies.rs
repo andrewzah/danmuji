@@ -27,7 +27,7 @@ use crate::{
 group!({
     name: "replies",
     options: {
-        prefixes: ["r"],
+        prefixes: ["r", "replies"],
     },
     commands: [list, set, delete]
 });

@@ -8,6 +8,7 @@ extern crate diesel;
 extern crate diesel_migrations;
 
 use std::{env, sync::Arc};
+use std::{collections::{HashMap, HashSet}};
 
 use diesel_migrations::{embed_migrations, run_pending_migrations};
 use dotenv::dotenv;
@@ -21,6 +22,7 @@ use serenity::{
 };
 use white_rabbit::Scheduler;
 
+mod checks;
 mod commands;
 mod db;
 mod dispatch;
@@ -33,7 +35,7 @@ mod utils;
 
 use commands::{
     channels::CHANNELS_GROUP,
-    general::{GENERAL_GROUP, HELP},
+    general::{ADMIN_GROUP, GENERAL_GROUP, HELP},
     hangeul::HANGEUL_GROUP,
     reminders::REMIND_ME_GROUP,
     replies::REPLIES_GROUP,
@@ -112,15 +114,30 @@ fn main() {
     }
 
     let bot_id = get_bot_id(&client);
-    let bot_prefix = &env::var("DANMUJI_PREFIX").expect("DANMUJI_PREFIX isn't set!");
+    let bot_prefix = match env::var("DANMUJI_PREFIX") {
+        Ok(prefix) => prefix,
+        Err(_) => String::from("yi "),
+    };
+
+    // We will fetch your bot's owners and id
+    let (owners, bot_id) = match client.cache_and_http.http.get_current_application_info() {
+        Ok(info) => {
+            let mut owners = HashSet::new();
+            owners.insert(info.owner.id);
+
+            (owners, info.id)
+        },
+        Err(why) => panic!("Could not access application info: {:?}", why),
+    };
 
     client.with_framework(
         StandardFramework::new()
-            .configure(|c| {
-                c.prefix(bot_prefix)
-                    .on_mention(Some(bot_id))
-                    .delimiters(vec![", ", ","])
-            })
+            .configure(|c| c
+                .prefix(&bot_prefix)
+                .on_mention(Some(bot_id))
+                .delimiters(vec![", ", ","])
+                .owners(owners)
+            )
             .on_dispatch_error(|ctx, msg, error| {
                 if let DispatchError::Ratelimited(seconds) = error {
                     let _ = msg.channel_id.say(
@@ -135,6 +152,7 @@ fn main() {
                 });
             })
             .help(&HELP)
+            .group(&ADMIN_GROUP)
             .group(&GENERAL_GROUP)
             .group(&CHANNELS_GROUP)
             .group(&HANGEUL_GROUP)

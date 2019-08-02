@@ -65,7 +65,7 @@ pub fn pool() -> Pool {
     Arc::clone(&POOL)
 }
 
-// ---------------- INSERTS/UPDATES --------------------
+// ---------------- CRUD --------------------
 
 pub fn insert_message(nm: NewMessage) -> Result<usize> {
     use crate::schema::messages::dsl::*;
@@ -75,6 +75,24 @@ pub fn insert_message(nm: NewMessage) -> Result<usize> {
         .values(&nm)
         .execute(&conn)
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
+pub fn delete_guild_messages(gid: &str) -> Result<usize> {
+    use crate::schema::messages::dsl::*;
+
+    let conn = pool().get()?;
+    diesel::delete(messages.filter(guild_id.eq(gid)))
+        .execute(&conn)
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
+}
+
+pub fn delete_all_messages() -> Result<usize> {
+    use crate::schema::messages::dsl::*;
+
+    let conn = pool().get()?;
+    diesel::delete(messages)
+        .execute(&conn)
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
 }
 
 pub fn upsert_user(nu: &NewUser) -> Result<usize> {
