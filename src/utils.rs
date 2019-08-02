@@ -91,7 +91,6 @@ pub fn format_channels(input: String) -> Result<Vec<String>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::{black_box, Bencher};
 
     #[test]
     fn it_parses_chars_correctly() {
@@ -99,7 +98,13 @@ mod tests {
     }
 
     #[test]
+    fn it_parses_chars_with_quotes() {
+        assert_eq!((7, 14, 21), parse_content("'오늘 클립해줄게' lmaooooooooooo").unwrap());
+    }
+
+    #[test]
     fn it_parses_chars_with_punctuation() {
+        assert_eq!((0, 23, 23), parse_content("trev and marvin bucket list:").unwrap());
         assert_eq!((2, 2, 4), parse_content("ㅁ!ㅁ!n @)(*%n").unwrap());
     }
 

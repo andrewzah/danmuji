@@ -60,13 +60,13 @@ fn populate_users(ctx: &Context) {
     scheduler.add_task_duration(interval, move |_| {
         info!("Running ratio task.");
 
-        let ratio_list = match db::get_ratio_list() {
-            Ok(list) => list,
-            Err(err) => {
-                error!("Unable to get ratio list: {}", err);
-                return DateResult::Repeat(Utc::now() + interval);
-            },
-        };
+        //let ratio_list = match db::get_ratio_list() {
+            //Ok(list) => list,
+            //Err(err) => {
+                //error!("Unable to get ratio list: {}", err);
+                //return DateResult::Repeat(Utc::now() + interval);
+            //},
+        //};
 
         let channel_id = ChannelId(chan_id);
 

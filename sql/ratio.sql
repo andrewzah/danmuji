@@ -5,7 +5,8 @@ WITH filter as (
   ON c.channel_id = m.channel_id
   LEFT JOIN users u
   ON u.user_id = m.user_id
-  WHERE c.enabled is NOT false
+  WHERE m.guild_id = '{guild_id}'
+  AND c.enabled is NOT false
   AND u.opt_out IS NOT true
 ),
 summ AS

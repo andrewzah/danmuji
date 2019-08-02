@@ -40,6 +40,7 @@ pub enum ErrorKind {
     Regex(regex::Error),
     IO(std::io::Error),
     Serenity(serenity::Error),
+    StrFmt(strfmt::FmtError),
 }
 
 impl fmt::Display for AppError {
@@ -51,6 +52,7 @@ impl fmt::Display for AppError {
             ErrorKind::Regex(ref err) => err.fmt(f),
             ErrorKind::IO(ref err) => err.fmt(f),
             ErrorKind::Serenity(ref err) => err.fmt(f),
+            ErrorKind::StrFmt(ref err) => err.fmt(f),
         }
     }
 }
@@ -64,6 +66,7 @@ impl fmt::Debug for AppError {
             ErrorKind::Regex(ref err) => err.fmt(f),
             ErrorKind::IO(ref err) => err.fmt(f),
             ErrorKind::Serenity(ref err) => err.fmt(f),
+            ErrorKind::StrFmt(ref err) => err.fmt(f),
         }
     }
 }
@@ -118,5 +121,11 @@ impl From<serenity::Error> for AppError {
 impl From<serenity::framework::standard::CommandError> for AppError {
     fn from(err: serenity::framework::standard::CommandError) -> AppError {
         AppError::new(ErrorKind::Generic(err.0))
+    }
+}
+
+impl From<strfmt::FmtError> for AppError {
+    fn from(err: strfmt::FmtError) -> AppError {
+        AppError::new(ErrorKind::StrFmt(err))
     }
 }

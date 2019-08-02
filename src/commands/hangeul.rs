@@ -79,9 +79,10 @@ fn opt_in(ctx: &mut Context, msg: &Message) -> CommandResult {
 
 #[command]
 fn ratio_results(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let guild_id = msg.guild_id.ok_or("Replies don't work in direct messages.")?;
     let _ = &msg.channel_id.broadcast_typing(&ctx.http);
 
-    match db::get_ratio_list() {
+    match db::get_ratio_list(&guild_id.to_string()) {
         Ok(list) => {
             msg.channel_id.send_message(&ctx.http, |m| {
                 m.embed(|e| {

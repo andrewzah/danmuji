@@ -112,11 +112,12 @@ fn main() {
     }
 
     let bot_id = get_bot_id(&client);
+    let bot_prefix = &env::var("DANMUJI_PREFIX").expect("DANMUJI_PREFIX isn't set!");
 
     client.with_framework(
         StandardFramework::new()
             .configure(|c| {
-                c.prefix("yi ")
+                c.prefix(bot_prefix)
                     .on_mention(Some(bot_id))
                     .delimiters(vec![", ", ","])
             })

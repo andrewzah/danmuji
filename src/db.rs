@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env,
     fs,
     path::{Path, PathBuf},
@@ -15,6 +16,7 @@ use diesel::{
 use lazy_static::lazy_static;
 use log::info;
 use serenity::prelude::*;
+use strfmt::strfmt;
 
 use crate::{
     errors::*,
@@ -48,8 +50,9 @@ fn init_pool(db_url: &str) -> Pool {
     let manager = ConnectionManager::<PgConnection>::new(db_url);
 
     let r2d2_pool = r2d2::Pool::builder()
-        .max_size(4)
-        .connection_timeout(Duration::from_secs(60))
+        .max_size(30)
+        .idle_timeout(Some(Duration::from_secs(30)))
+        .connection_timeout(Duration::from_secs(30))
         .build(manager)
         .expect("Unable to build pool!");
 
@@ -191,11 +194,16 @@ pub fn delete_reply(keyword: &str, gid: &str) -> Result<usize> {
 
 // ---------------- SQL QUERIES ----------------------
 
-pub fn get_ratio_list() -> Result<RatioResultList> {
+pub fn get_ratio_list(gid: &str) -> Result<RatioResultList> {
     use crate::schema::messages::dsl::*;
 
     let conn = pool().get()?;
-    let sql = fs::read_to_string("sql/ratio.sql")?;
+    let sql_file = fs::read_to_string("sql/ratio.sql")?;
+    let mut vars = HashMap::new();
+    vars.insert("guild_id".to_string(), gid);
+    let sql = strfmt(&sql_file, &vars)?;
+
+    info!("{}", &sql);
 
     let results = sql_query(sql).load(&conn);
 

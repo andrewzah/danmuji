@@ -10,7 +10,6 @@ up:
 	@cargo run
 
 docker:
-	docker build -f docker/Dockerfile-alpine-rust docker -t andrewzah/alpine-rust
 	docker build -f docker/Dockerfile . -t andrewzah/danmuji
 
 docker-clean:

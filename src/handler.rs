@@ -80,6 +80,8 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
 
     // ignore other command messages
     if let Some(c) = msg.content.chars().next() {
+        if c == '"' { return false }
+
         if c.is_ascii_punctuation() {
             return true;
         }
