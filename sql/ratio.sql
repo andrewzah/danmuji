@@ -19,12 +19,13 @@ summ AS
   FROM filter
   GROUP BY user_id
 ), map AS (
-   SELECT summ.user_id,
-      summ.sum_messages,
-      sum_hangeul_count::integer as sum_hangeul_count,
-      summ.sum_non_hangeul_count::integer as sum_non_hangeul_count,
-      sum_raw_count::integer as sum_raw_count,
-      sum_hangeul_count::float / sum_raw_count::float as ratio
-   FROM summ
+  SELECT summ.user_id,
+    summ.sum_messages,
+    sum_hangeul_count::integer as sum_hangeul_count,
+    summ.sum_non_hangeul_count::integer as sum_non_hangeul_count,
+    sum_raw_count::integer as sum_raw_count,
+    sum_hangeul_count::float / (sum_raw_count::float+1) as ratio
+  FROM summ
+  WHERE sum_raw_count > 0 --for bots that only respond with embeds/etc
 )
 SELECT * FROM map ORDER BY ratio DESC, sum_raw_count DESC;

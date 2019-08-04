@@ -12,3 +12,4 @@ danmuji
 *.db
 config.json
 /target
+/sql/backups
