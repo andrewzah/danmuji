@@ -1,20 +1,11 @@
-use std::{env, sync::Arc};
+use std::sync::Arc;
 
 use hey_listen::sync::ParallelDispatcher as Dispatcher;
-use log::{debug, error, info};
-use serde_json::json;
-use serenity::{
-    client::bridge::gateway::ShardManager,
-    framework::standard::{DispatchError, StandardFramework},
-    model::prelude::*,
-    prelude::*,
-};
+use log::info;
+use serenity::{model::prelude::*, prelude::*};
 use white_rabbit::{DateResult, Duration, Scheduler, Utc};
 
-use crate::{
-    db::{self, *},
-    dispatch::*,
-};
+use crate::dispatch::*;
 
 pub fn init_tasks(ctx: &Context) {
     populate_users(ctx);
@@ -48,27 +39,27 @@ fn build_scheduler_dispatcher(
 }
 
 fn populate_users(ctx: &Context) {
-    let (scheduler, dispatcher) = build_scheduler_dispatcher(&ctx);
+    let (scheduler, _dispatcher) = build_scheduler_dispatcher(&ctx);
 
     //let interval = Duration::milliseconds(300_000 as i64); // 5 minutes in ms
     let interval = Duration::milliseconds(10_000 as i64);
     //let http = ctx.http.clone();
     let mut scheduler = scheduler.write();
-    let http = ctx.http.clone();
+    let _http = ctx.http.clone();
     let chan_id = 500839254306455553_u64;
 
     scheduler.add_task_duration(interval, move |_| {
         info!("Running ratio task.");
 
         //let ratio_list = match db::get_ratio_list() {
-            //Ok(list) => list,
-            //Err(err) => {
-                //error!("Unable to get ratio list: {}", err);
-                //return DateResult::Repeat(Utc::now() + interval);
-            //},
+        //Ok(list) => list,
+        //Err(err) => {
+        //error!("Unable to get ratio list: {}", err);
+        //return DateResult::Repeat(Utc::now() + interval);
+        //},
         //};
 
-        let channel_id = ChannelId(chan_id);
+        let _channel_id = ChannelId(chan_id);
 
         //match channel_id.send_message(&http, |m| m.content(ratio_list.pretty_print(&ctx.http))) {
         //Ok(_) => {}

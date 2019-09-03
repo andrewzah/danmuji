@@ -1,6 +1,5 @@
 use std::{thread, time};
 
-use diesel::prelude::*;
 use serenity::http::raw::Http;
 
 use crate::schema::channels;
@@ -36,12 +35,12 @@ impl ChannelList {
     }
 
     // TODO: cache/get name
-    pub fn pretty_print(&self, http: &Http) -> String {
+    pub fn pretty_print(&self, _http: &Http) -> String {
         let mut result = String::new();
         result.push_str("Ratio Results:\n");
 
         for channel in &self.list {
-            let channel_id = channel
+            let _channel_id = channel
                 .channel_id
                 .parse::<u64>()
                 .expect("Unable to parse channel!");

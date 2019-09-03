@@ -1,24 +1,14 @@
-use log::{debug, info};
 use serenity::{
     client::Context,
     framework::standard::{
-        help_commands,
-        macros::{command, group, help},
-        Args,
+        macros::{command, group},
         CommandError,
-        CommandGroup,
         CommandResult,
-        HelpOptions,
     },
-    model::{channel::Message, id::UserId},
+    model::channel::Message,
 };
 
-use crate::{
-    checks::*,
-    db,
-    models::{channel::NewChannel, user::NewUser},
-    BotData,
-};
+use crate::{checks::*, db, models::user::NewUser, utils};
 
 group!({
     name: "hangeul",
@@ -37,7 +27,7 @@ fn ratio(ctx: &mut Context, msg: &Message) -> CommandResult {
     Ok(())
 }
 
-fn change_user_opt_out(opt_out: bool, user_id: String, msg: &Message) -> CommandResult {
+fn change_user_opt_out(opt_out: bool, msg: &Message) -> CommandResult {
     let new_user = NewUser {
         opt_out: opt_out,
         user_id: &msg.author.id.to_string(),
@@ -51,52 +41,43 @@ fn change_user_opt_out(opt_out: bool, user_id: String, msg: &Message) -> Command
 
 #[command]
 fn opt_out(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let result = change_user_opt_out(true, msg.author.id.to_string(), msg);
+    let result = change_user_opt_out(true, msg);
     match result {
-        Ok(_) => {
-            msg.channel_id.say(
-                &ctx.http,
-                format!("<@:{}> has successfully opted out.", msg.author.id),
-            );
-            Ok(())
-        },
+        Ok(_) => utils::reply(&msg, &ctx, "Successfully opted out"),
         Err(err) => Err(err),
     }
 }
 
 #[command]
 fn opt_in(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let result = change_user_opt_out(false, msg.author.id.to_string(), msg);
+    let result = change_user_opt_out(false, msg);
     match result {
-        Ok(_) => {
-            msg.channel_id.say(
-                &ctx.http,
-                format!("<@:{}> has successfully opted in.", msg.author.id),
-            );
-            Ok(())
-        },
+        Ok(_) => utils::say(
+            &msg.channel_id,
+            &ctx,
+            &format!("<@:{}> has successfully opted in.", msg.author.id),
+        ),
         Err(err) => Err(err),
     }
 }
 
 #[command]
 fn ratio_results(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild_id.ok_or("Replies don't work in direct messages.")?;
+    let guild_id = msg
+        .guild_id
+        .ok_or("Replies don't work in direct messages.")?;
     let _ = &msg.channel_id.broadcast_typing(&ctx.http);
 
     match db::get_ratio_list(&guild_id.to_string()) {
-        Ok(list) => {
-            msg.channel_id.send_message(&ctx.http, |m| {
-                m.embed(|e| {
-                    e.title("한글/English Ratio Results");
-                    e.description(list.pretty_print(&ctx.http));
+        Ok(list) => utils::send_message(&msg.channel_id, &ctx, |m| {
+            m.embed(|e| {
+                e.title("한글/English Ratio Results");
+                e.description(list.pretty_print(&ctx.http));
 
-                    e
-                });
-                m
+                e
             });
-            Ok(())
-        },
+            m
+        }),
         Err(err) => Err(CommandError::from(err)),
     }
 }
@@ -104,13 +85,16 @@ fn ratio_results(ctx: &mut Context, msg: &Message) -> CommandResult {
 #[command]
 #[checks(Admin)]
 fn reset_guild(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let guild_id = msg.guild_id.ok_or("Replies don't work in direct messages.")?;
+    let guild_id = msg
+        .guild_id
+        .ok_or("Replies don't work in direct messages.")?;
 
     match db::delete_guild_messages(&guild_id.to_string()) {
-        Ok(count) => {
-            msg.channel_id.say(&ctx.http, format!("Cleared {} messages from this guild.", count));
-            Ok(())
-        },
+        Ok(count) => utils::say(
+            &msg.channel_id,
+            &ctx,
+            &format!("Cleared {} messages from this guild.", count),
+        ),
         Err(err) => Err(CommandError::from(err)),
     }
 }
@@ -119,11 +103,11 @@ fn reset_guild(ctx: &mut Context, msg: &Message) -> CommandResult {
 #[checks(Owner)]
 fn reset_all(ctx: &mut Context, msg: &Message) -> CommandResult {
     match db::delete_all_messages() {
-        Ok(count) => {
-            msg.channel_id.say(&ctx.http, format!("Cleared {} messages from all guilds.", count));
-            Ok(())
-        },
+        Ok(count) => utils::say(
+            &msg.channel_id,
+            &ctx,
+            &format!("Cleared {} messages from all guilds.", count),
+        ),
         Err(err) => Err(CommandError::from(err)),
     }
 }
-

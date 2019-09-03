@@ -1,19 +1,7 @@
-use log::{info, error};
+use log::info;
 use serenity::{
-    client::bridge::gateway::ShardManager,
-    framework::standard::{
-        DispatchError,
-        StandardFramework,
-        Args,
-        CheckResult,
-        CommandError,
-        CommandGroup,
-        CommandResult,
-        CommandOptions,
-        HelpOptions,
-        macros::check,
-    },
-    model::{channel::Message, id::UserId},
+    framework::standard::{macros::check, Args, CheckResult, CommandOptions},
+    model::channel::Message,
     prelude::*,
 };
 
@@ -36,7 +24,6 @@ fn owner_check(_: &mut Context, msg: &Message, _: &mut Args, _: &CommandOptions)
 #[display_in_help(true)]
 fn admin_check(ctx: &mut Context, msg: &Message, _: &mut Args, _: &CommandOptions) -> CheckResult {
     if let Some(member) = msg.member(&ctx.cache) {
-
         if let Ok(permissions) = member.permissions(&ctx.cache) {
             return permissions.administrator().into();
         }

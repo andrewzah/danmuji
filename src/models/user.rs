@@ -1,5 +1,3 @@
-use diesel::prelude::*;
-
 use crate::schema::users;
 
 #[derive(Queryable, PartialEq, Debug)]

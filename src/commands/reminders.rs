@@ -1,26 +1,17 @@
-use std::{
-    collections::HashSet,
-    env,
-    hash::{Hash, Hasher},
-    sync::Arc,
-};
+use std::sync::Arc;
 
-use hey_listen::sync::{
-    ParallelDispatcher as Dispatcher,
-    ParallelDispatcherRequest as DispatcherRequest,
-};
-use log::info;
+use hey_listen::sync::ParallelDispatcherRequest as DispatcherRequest;
 use serenity::{
     client::Context,
     framework::standard::{
-        macros::{command, group, help},
+        macros::{command, group},
         Args,
         CommandResult,
     },
     http::Http,
     model::prelude::*,
 };
-use white_rabbit::{DateResult, Duration, Scheduler, Utc};
+use white_rabbit::{DateResult, Duration, Utc};
 
 use crate::dispatch::*;
 
@@ -45,7 +36,7 @@ fn thanks_for_reacting(
 
 #[command]
 fn add(context: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
-    let name: String = args.single()?;
+    let _name: String = args.single()?;
     let time: u64 = args.single()?;
     let repeat: bool = args.single()?;
     let args = args.rest().to_string();

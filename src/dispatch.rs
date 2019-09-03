@@ -3,10 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use hey_listen::sync::{
-    ParallelDispatcher as Dispatcher,
-    ParallelDispatcherRequest as DispatcherRequest,
-};
+use hey_listen::sync::ParallelDispatcher as Dispatcher;
 use serenity::{model::prelude::*, prelude::*};
 use white_rabbit::Scheduler;
 

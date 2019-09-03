@@ -1,11 +1,4 @@
-use std::{
-    collections::HashMap,
-    env,
-    fs,
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::Duration,
-};
+use std::{collections::HashMap, env, fs, sync::Arc, time::Duration};
 
 use diesel::{
     insert_into,
@@ -21,17 +14,15 @@ use strfmt::strfmt;
 use crate::{
     errors::*,
     models::{
-        channel::{Channel, ChannelId, ChannelList, NewChannel},
+        channel::{Channel, ChannelList, NewChannel},
         message::NewMessage,
         ratio::RatioResultList,
-        user::NewUser,
         reply::{NewReply, Reply, ReplyList},
+        user::NewUser,
     },
-    schema::messages,
 };
 
 type Pool = Arc<r2d2::Pool<ConnectionManager<PgConnection>>>;
-type Conn = r2d2::PooledConnection<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 
 lazy_static! {
     static ref POOL: Pool = init_pool(&database_url());
@@ -223,8 +214,6 @@ pub fn delete_reply(keyword: &str, gid: &str) -> Result<usize> {
 // ---------------- SQL QUERIES ----------------------
 
 pub fn get_ratio_list(gid: &str) -> Result<RatioResultList> {
-    use crate::schema::messages::dsl::*;
-
     let conn = pool().get()?;
     let sql_file = fs::read_to_string("sql/ratio.sql")?;
     let mut vars = HashMap::new();

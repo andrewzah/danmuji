@@ -1,25 +1,19 @@
-use log::{debug, info};
+use log::info;
 use serenity::{
     client::Context,
     framework::standard::{
-        help_commands,
-        macros::{command, group, help},
+        macros::{command, group},
         Args,
         CommandError,
-        CommandGroup,
         CommandResult,
-        HelpOptions,
     },
-    model::{
-        channel::{GuildChannel, Message},
-        id::{ChannelId, UserId},
-    },
+    model::channel::{GuildChannel, Message},
 };
 
 use crate::{
     db,
-    errors::{AppError, ErrorKind, Result},
-    models::{channel::NewChannel, user::NewUser},
+    errors::{AppError, Result},
+    models::channel::NewChannel,
     utils,
     BotData,
 };
@@ -139,7 +133,12 @@ fn disable_all(ctx: &mut Context, msg: &Message) -> CommandResult {
 // --------------------------------------------------------------------
 
 fn refresh_disabled_channel_ids(ctx: &Context) -> CommandResult {
-    let data_lock = ctx.data.read().get::<BotData>().cloned().expect("Expected BotData");
+    let data_lock = ctx
+        .data
+        .read()
+        .get::<BotData>()
+        .cloned()
+        .expect("Expected BotData");
     let mut bot_data = data_lock.lock();
 
     match db::disabled_channel_ids() {
@@ -187,7 +186,7 @@ fn update_channels(
 
     match db::upsert_channels(&channels, enabled) {
         Ok(_) => {
-            msg.channel_id.say(&ctx.http, message);
+            let _ = utils::say(&msg.channel_id, &ctx, &message);
             refresh_disabled_channel_ids(ctx)
         },
         Err(err) => Err(CommandError::from(err)),

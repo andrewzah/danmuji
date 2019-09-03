@@ -1,20 +1,21 @@
 #![allow(dead_code)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
 
 #[macro_use]
 extern crate diesel;
 #[macro_use]
 extern crate diesel_migrations;
 
-use std::{env, sync::Arc};
-use std::{collections::{HashMap, HashSet}};
-use std::time::{Duration,Instant};
+use std::{
+    collections::HashSet,
+    env,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
-use diesel_migrations::{embed_migrations, run_pending_migrations};
+use diesel_migrations::embed_migrations;
 use dotenv::dotenv;
 use hey_listen::sync::ParallelDispatcher as Dispatcher;
-use log::{info, error};
+use log::{error, info};
 use serenity::{
     client::bridge::gateway::ShardManager,
     framework::standard::{DispatchError, StandardFramework},
@@ -42,9 +43,9 @@ use commands::{
     replies::REPLIES_GROUP,
 };
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
-use errors::{AppError, ErrorKind};
+use errors::AppError;
 use handler::Handler;
-use models::{message::NewMessage, channel::ChannelId};
+use models::message::NewMessage;
 
 struct ShardManagerContainer;
 impl TypeMapKey for ShardManagerContainer {
@@ -73,7 +74,7 @@ impl BotData {
                     self.last_insertion = Instant::now();
                     self.message_queue = vec![];
                 },
-                Err(err) => error!("err inserting messages: {}", err)
+                Err(err) => error!("err inserting messages: {}", err),
             }
         }
     }
@@ -81,9 +82,11 @@ impl BotData {
 
 fn migrate() {
     // run before to fully migrate
-    let conn = db::pool().clone().get()
+    let conn = db::pool()
+        .clone()
+        .get()
         .expect("Unable to get db connection on migrate startup!!");
-    embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
+    let _ = embedded_migrations::run_with_output(&conn, &mut std::io::stdout());
 }
 
 fn init_logging() {
@@ -106,8 +109,7 @@ fn main() {
     init_logging();
     migrate();
 
-    let discord_token = &env::var("DISCORD_TOKEN")
-        .expect("Is DISCORD_TOKEN set?");
+    let discord_token = &env::var("DISCORD_TOKEN").expect("Is DISCORD_TOKEN set?");
 
     let scheduler = Scheduler::new(4);
     let scheduler = Arc::new(RwLock::new(scheduler));
@@ -136,7 +138,7 @@ fn main() {
         data.insert::<BotData>(Arc::new(Mutex::new(bot_data)));
     }
 
-    let bot_id = get_bot_id(&client);
+    let _bot_id = get_bot_id(&client);
     let bot_prefix = match env::var("DANMUJI_PREFIX") {
         Ok(prefix) => prefix,
         Err(_) => String::from("yi "),
@@ -155,12 +157,12 @@ fn main() {
 
     client.with_framework(
         StandardFramework::new()
-            .configure(|c| c
-                .prefix(&bot_prefix)
-                .on_mention(Some(bot_id))
-                .delimiters(vec![", ", ","])
-                .owners(owners)
-            )
+            .configure(|c| {
+                c.prefix(&bot_prefix)
+                    .on_mention(Some(bot_id))
+                    .delimiters(vec![", ", ","])
+                    .owners(owners)
+            })
             .on_dispatch_error(|ctx, msg, error| {
                 if let DispatchError::Ratelimited(seconds) = error {
                     let _ = msg.channel_id.say(
@@ -169,8 +171,8 @@ fn main() {
                     );
                 }
             })
-            .after(|ctx, msg, cmd_name, res| {
-                res.map_err(|err| {
+            .after(|ctx, msg, _cmd_name, res| {
+                let _ = res.map_err(|err| {
                     AppError::from(err).send_err(&ctx.http, msg, "Unable to run command".into())
                 });
             })
@@ -180,7 +182,7 @@ fn main() {
             .group(&CHANNELS_GROUP)
             .group(&HANGEUL_GROUP)
             .group(&REMIND_ME_GROUP)
-            .group(&REPLIES_GROUP)
+            .group(&REPLIES_GROUP),
     );
 
     if let Err(why) = client.start() {

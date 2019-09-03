@@ -1,12 +1,17 @@
+use std::error::Error;
+
 use lazy_static::lazy_static;
-use log::{debug, info};
+use log::error;
 use rayon::prelude::*;
 use regex::Regex;
-
-use crate::{
-    errors::{AppError, Result},
-    utils,
+use serenity::{
+    builder::CreateMessage,
+    framework::standard::{CommandError, CommandResult},
+    model::prelude::*,
+    prelude::*,
 };
+
+use crate::{errors::Result, utils};
 
 const SYLLABLE_START: u32 = 0xAC00;
 const SYLLABLE_END: u32 = 0xD7A3;
@@ -24,8 +29,7 @@ lazy_static! {
         Regex::new(NON_CHAR_REGEXP).expect("Unable to init non_char_regex!");
     static ref CHANNEL_REGEX: Regex =
         Regex::new(CHANNEL_REGEXP).expect("Unable to init channel_regex!");
-    static ref TAG_REGEX: Regex =
-        Regex::new(TAG_REGEXP).expect("Unable to init tag_regex!");
+    static ref TAG_REGEX: Regex = Regex::new(TAG_REGEXP).expect("Unable to init tag_regex!");
 }
 
 #[allow(dead_code)]
@@ -59,10 +63,7 @@ pub fn parse_content(content: &str) -> Result<(i32, i32, i32)> {
 }
 
 pub fn parse_tag(content: &str) -> Option<&str> {
-    TAG_REGEX
-        .captures(content)?
-        .get(1)
-        .map(|m| m.as_str())
+    TAG_REGEX.captures(content)?.get(1).map(|m| m.as_str())
 }
 
 pub fn format_seconds(secs: u64) -> String {
@@ -88,6 +89,39 @@ pub fn format_channels(input: String) -> Result<Vec<String>> {
         .collect())
 }
 
+pub fn reply(msg: &Message, ctx: &Context, text: &str) -> CommandResult {
+    match msg.reply(ctx, text) {
+        Err(err) => {
+            error!("Unable to reply: {}", err.description());
+            Err(CommandError(err.description().into()))
+        },
+        _ => Ok(()),
+    }
+}
+
+pub fn say(channel_id: &ChannelId, ctx: &Context, msg: &str) -> CommandResult {
+    match channel_id.say(ctx, msg) {
+        Err(err) => {
+            error!("Unable to say: {}", err.description());
+            Err(CommandError(err.description().into()))
+        },
+        _ => Ok(()),
+    }
+}
+
+pub fn send_message<'a, F>(channel_id: &ChannelId, ctx: &Context, f: F) -> CommandResult
+where
+    for<'b> F: FnOnce(&'b mut CreateMessage<'a>) -> &'b mut CreateMessage<'a>,
+{
+    match channel_id.send_message(&ctx.http, f) {
+        Err(err) => {
+            error!("Unable to send message: {}", err.description());
+            Err(CommandError(err.description().into()))
+        },
+        _ => Ok(()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -99,7 +133,6 @@ mod tests {
         assert_eq!(true, is_hangeul('ㅇ'));
         assert_eq!(true, is_hangeul('ᄓ'));
         assert_eq!(true, is_hangeul('ㄹ'));
-
     }
 
     #[test]
@@ -116,7 +149,10 @@ mod tests {
 
     #[test]
     fn it_doesnt_strip_hangul() {
-        assert_eq!("addㅇㅁㅏㄴ만", strip_content("addㅇㅁㅏㄴ만").unwrap());
+        assert_eq!(
+            "addㅇㅁㅏㄴ만",
+            strip_content("addㅇㅁㅏㄴ만").unwrap()
+        );
     }
 
     #[test]
@@ -126,13 +162,22 @@ mod tests {
 
     #[test]
     fn it_parses_chars_with_quotes() {
-        assert_eq!((7, 14, 21), parse_content("'오늘 클립해줄게' lmaooooooooooo").unwrap());
-        assert_eq!((7, 14, 21), parse_content("\"오늘 클립해줄게\" lmaooooooooooo").unwrap());
+        assert_eq!(
+            (7, 14, 21),
+            parse_content("'오늘 클립해줄게' lmaooooooooooo").unwrap()
+        );
+        assert_eq!(
+            (7, 14, 21),
+            parse_content("\"오늘 클립해줄게\" lmaooooooooooo").unwrap()
+        );
     }
 
     #[test]
     fn it_parses_chars_with_punctuation() {
-        assert_eq!((0, 23, 23), parse_content("trev and marvin bucket list:").unwrap());
+        assert_eq!(
+            (0, 23, 23),
+            parse_content("trev and marvin bucket list:").unwrap()
+        );
         assert_eq!((2, 2, 4), parse_content("ㅁ!ㅁ!n @)(*%n").unwrap());
     }
 

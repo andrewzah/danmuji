@@ -1,6 +1,6 @@
 use std::{thread, time};
 
-use diesel::{prelude::*, sql_types::*};
+use diesel::sql_types::*;
 use serenity::http::raw::Http;
 
 #[derive(QueryableByName, PartialEq, Debug)]
@@ -34,7 +34,7 @@ impl RatioResultList {
     }
 
     // TODO: cache
-    pub fn pretty_print(&self, http: &Http) -> String {
+    pub fn pretty_print(&self, _http: &Http) -> String {
         let mut result = String::new();
         result.push_str("Ratio Results:\n");
 
@@ -42,8 +42,8 @@ impl RatioResultList {
             //#TODO eliminate unwrap, probably by using u64 in db, not string
             //
             //let name = match http.get_user(rr.user_id.parse::<u64>().unwrap()) {
-                //Ok(user) => user.name,
-                //Err(_) => "Err grabbing name!".into(),
+            //Ok(user) => user.name,
+            //Err(_) => "Err grabbing name!".into(),
             //};
 
             let s = format!(

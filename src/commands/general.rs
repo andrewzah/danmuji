@@ -1,13 +1,11 @@
 use std::collections::HashSet;
 
-use log::{debug, info};
 use serenity::{
     client::Context,
     framework::standard::{
         help_commands,
         macros::{command, group, help},
         Args,
-        CommandError,
         CommandGroup,
         CommandResult,
         HelpOptions,
@@ -45,7 +43,12 @@ fn help(
 
 #[command]
 fn uptime(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let data_lock = ctx.data.read().get::<BotData>().cloned().expect("Expected BotData");
+    let data_lock = ctx
+        .data
+        .read()
+        .get::<BotData>()
+        .cloned()
+        .expect("Expected BotData");
     let elapsed = data_lock.lock().start_time.elapsed().as_secs();
 
     let resp = format!("Uptime: {}", utils::format_seconds(elapsed));

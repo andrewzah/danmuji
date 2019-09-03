@@ -1,10 +1,6 @@
 use chrono::{DateTime, FixedOffset, Utc};
-use diesel::prelude::*;
 use log::{error, info};
-use serenity::{
-    client::Context,
-    model::{channel::Message as SerenityMessage, id::GuildId},
-};
+use serenity::model::{channel::Message as SerenityMessage, id::GuildId};
 
 use crate::{db, errors::Result, schema::messages, utils};
 

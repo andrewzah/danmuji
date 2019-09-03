@@ -46,10 +46,4 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
-    channels,
-    guilds,
-    messages,
-    replies,
-    users,
-);
+allow_tables_to_appear_in_same_query!(channels, guilds, messages, replies, users,);

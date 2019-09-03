@@ -1,11 +1,9 @@
-use std::time::{Duration,Instant};
-
 use log::{debug, error, info};
 use serenity::{model::prelude::*, prelude::*};
 
-use crate::{db, dispatch::*, errors::*, models::message::NewMessage, tasks, utils, BotData};
+use crate::{db, dispatch::*, models::message::NewMessage, utils, BotData};
 
-const BOT_ID: u64 = 592184706896756736;
+//const BOT_ID: u64 = 592184706896756736;
 
 pub struct Handler;
 impl EventHandler for Handler {
@@ -18,21 +16,28 @@ impl EventHandler for Handler {
     }
 
     fn message(&self, ctx: Context, msg: Message) {
-        if message_filter(&ctx, &msg) == false {
-            info!("filter not activated: {}", &msg.content);
-            match NewMessage::from_msg(&msg) {
-                Ok(message) => {
-                    let data_lock = ctx.data.read().get::<BotData>().cloned().expect("Unable to get BotData");
-                    let mut bot_data = data_lock.lock();
+        if let Some(guild_id) = msg.guild_id {
+            if message_filter(&ctx, &msg) == false {
+                info!("filter not activated: {}", &msg.content);
+                match NewMessage::from_msg(&msg) {
+                    Ok(message) => {
+                        let data_lock = ctx
+                            .data
+                            .read()
+                            .get::<BotData>()
+                            .cloned()
+                            .expect("Unable to get BotData");
+                        let mut bot_data = data_lock.lock();
 
-                    bot_data.message_queue.push(message);
-                    bot_data.insert_messages();
+                        bot_data.message_queue.push(message);
+                        bot_data.insert_messages();
+                    },
+                    Err(err) => error!("err creating msg: {}", err),
                 }
-                Err(err) => error!("err creating msg: {}", err),
             }
-        }
 
-        check_reply(&ctx, &msg);
+            check_reply(guild_id, &ctx, &msg);
+        }
     }
 
     fn resume(&self, _: Context, resume: ResumedEvent) {
@@ -95,22 +100,23 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
     // ignore other command messages
     // don't ignore stuff like quotes/parens
     if let Some(c) = msg.content.chars().next() {
-        if c == '"' || c == '\'' || c == '(' || c == '-' { return false }
-        if c.is_ascii_punctuation() { return true; }
+        if c == '"' || c == '\'' || c == '(' || c == '-' {
+            return false;
+        }
+        if c.is_ascii_punctuation() {
+            return true;
+        }
     }
 
     false
 }
 
-fn check_reply(ctx: &Context, msg: &Message) {
-    if let Some(guild_id) = msg.guild_id {
-        if msg.content.starts_with(">") {
-            if let Some(tag) = utils::parse_tag(&msg.content) {
-                if let Some(reply) = db::get_reply(&tag, &guild_id.to_string()).ok() {
-                    info!("reply: {:?}", &reply);
-                    msg.channel_id.say(&ctx, &reply.url);
-                }
+fn check_reply(guild_id: GuildId, ctx: &Context, msg: &Message) {
+    if msg.content.starts_with(">") {
+        if let Some(tag) = utils::parse_tag(&msg.content) {
+            if let Some(reply) = db::get_reply(&tag, &guild_id.to_string()).ok() {
+                let _ = utils::say(&msg.channel_id, &ctx, &reply.url);
             }
-        };
-    }
+        }
+    };
 }
