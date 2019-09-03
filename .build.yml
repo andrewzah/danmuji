@@ -3,6 +3,7 @@ packages:
   - libgcc
   - rust
   - cargo
+  - postgresql-dev
 sources:
   - https://git.sr.ht/~andrewzah/danmuji
 tasks:
