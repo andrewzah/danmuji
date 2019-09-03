@@ -9,6 +9,7 @@ extern crate diesel_migrations;
 
 use std::{env, sync::Arc};
 use std::{collections::{HashMap, HashSet}};
+use std::time::{Duration,Instant};
 
 use diesel_migrations::{embed_migrations, run_pending_migrations};
 use dotenv::dotenv;
@@ -43,7 +44,7 @@ use commands::{
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
 use errors::{AppError, ErrorKind};
 use handler::Handler;
-use models::channel::ChannelId;
+use models::{message::NewMessage, channel::ChannelId};
 
 struct ShardManagerContainer;
 impl TypeMapKey for ShardManagerContainer {
@@ -51,11 +52,31 @@ impl TypeMapKey for ShardManagerContainer {
 }
 
 struct BotData {
+    pub start_time: Instant,
+    pub last_insertion: Instant,
+    pub message_queue: Vec<NewMessage>,
     pub disabled_channel_ids: Vec<u64>,
-    pub start_time: std::time::Instant,
 }
 impl TypeMapKey for BotData {
-    type Value = Arc<RwLock<BotData>>;
+    type Value = Arc<Mutex<BotData>>;
+}
+impl BotData {
+    pub fn insert_messages(&mut self) {
+        let thirty_secs = Duration::from_secs(30);
+        let elapsed = self.last_insertion.elapsed();
+        let len = self.message_queue.len();
+
+        if len >= 100 || elapsed > thirty_secs {
+            match db::insert_messages(&self.message_queue) {
+                Ok(count) => {
+                    info!("Inserted {} messages.", count);
+                    self.last_insertion = Instant::now();
+                    self.message_queue = vec![];
+                },
+                Err(err) => error!("err inserting messages: {}", err)
+            }
+        }
+    }
 }
 
 fn migrate() {
@@ -106,11 +127,13 @@ fn main() {
         data.insert::<SchedulerKey>(scheduler);
 
         let bot_data = BotData {
+            start_time: Instant::now(),
+            last_insertion: Instant::now(),
+            message_queue: vec![],
             disabled_channel_ids: db::disabled_channel_ids()
                 .expect("Unable to load disabled channels!"),
-            start_time: std::time::Instant::now(),
         };
-        data.insert::<BotData>(Arc::new(RwLock::new(bot_data)));
+        data.insert::<BotData>(Arc::new(Mutex::new(bot_data)));
     }
 
     let bot_id = get_bot_id(&client);

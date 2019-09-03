@@ -1,3 +1,5 @@
+use std::time::{Duration,Instant};
+
 use log::{debug, error, info};
 use serenity::{model::prelude::*, prelude::*};
 
@@ -17,11 +19,18 @@ impl EventHandler for Handler {
 
     fn message(&self, ctx: Context, msg: Message) {
         if message_filter(&ctx, &msg) == false {
+            info!("filter not activated: {}", &msg.content);
             match NewMessage::from_msg(&msg) {
-                Ok(message) => message.insert(),
+                Ok(message) => {
+                    let data_lock = ctx.data.read().get::<BotData>().cloned().expect("Unable to get BotData");
+                    let mut bot_data = data_lock.lock();
+
+                    bot_data.message_queue.push(message);
+                    bot_data.insert_messages();
+                }
                 Err(err) => error!("err creating msg: {}", err),
             }
-        };
+        }
 
         check_reply(&ctx, &msg);
     }
@@ -52,24 +61,29 @@ impl EventHandler for Handler {
 /// it should continue or not.
 fn message_filter(ctx: &Context, msg: &Message) -> bool {
     let data = ctx.data.read();
-    let bot_data = data.get::<BotData>().expect("Expected BotData");
+    let mutex = data.get::<BotData>().expect("Expected BotData mutex");
+    let bot_data = mutex.lock();
 
     // ignore disabled channels
     if bot_data
-        .read()
         .disabled_channel_ids
         .contains(msg.channel_id.as_u64())
     {
         return true;
     }
 
-    // ignore self output
-    if msg.author.id == BOT_ID {
+    // ignore all bots
+    if msg.author.bot == true {
         return true;
     }
 
     // ignore self input commands
     if msg.content.starts_with("yi ") {
+        return true;
+    }
+
+    // TODO remove when deploying!
+    if msg.content.starts_with("di ") {
         return true;
     }
 
@@ -79,12 +93,10 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
     }
 
     // ignore other command messages
+    // don't ignore stuff like quotes/parens
     if let Some(c) = msg.content.chars().next() {
-        if c == '"' { return false }
-
-        if c.is_ascii_punctuation() {
-            return true;
-        }
+        if c == '"' || c == '\'' || c == '(' || c == '-' { return false }
+        if c.is_ascii_punctuation() { return true; }
     }
 
     false

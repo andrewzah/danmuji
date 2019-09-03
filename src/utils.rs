@@ -93,6 +93,33 @@ mod tests {
     use super::*;
 
     #[test]
+    fn it_checks_hangeul() {
+        assert_eq!(true, is_hangeul('겴'));
+        assert_eq!(true, is_hangeul('만'));
+        assert_eq!(true, is_hangeul('ㅇ'));
+        assert_eq!(true, is_hangeul('ᄓ'));
+        assert_eq!(true, is_hangeul('ㄹ'));
+
+    }
+
+    #[test]
+    fn it_checks_non_hangeul() {
+        assert_eq!(false, is_hangeul('a'));
+        assert_eq!(false, is_hangeul('9'));
+        assert_eq!(false, is_hangeul('ž'));
+    }
+
+    #[test]
+    fn it_strips_numbers_and_punctuation() {
+        assert_eq!("add", strip_content("add123!@#").unwrap());
+    }
+
+    #[test]
+    fn it_doesnt_strip_hangul() {
+        assert_eq!("addㅇㅁㅏㄴ만", strip_content("addㅇㅁㅏㄴ만").unwrap());
+    }
+
+    #[test]
     fn it_parses_chars_correctly() {
         assert_eq!((2, 2, 4), parse_content("ㅁㅁnn").unwrap());
     }
@@ -100,6 +127,7 @@ mod tests {
     #[test]
     fn it_parses_chars_with_quotes() {
         assert_eq!((7, 14, 21), parse_content("'오늘 클립해줄게' lmaooooooooooo").unwrap());
+        assert_eq!((7, 14, 21), parse_content("\"오늘 클립해줄게\" lmaooooooooooo").unwrap());
     }
 
     #[test]
@@ -109,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    fn it_parses_max_length_str() {
+    fn it_parses_max_length_msg() {
         let mut content = String::new();
         for _ in 0..1000 {
             content.push_str("만a");

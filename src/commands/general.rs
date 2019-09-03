@@ -45,9 +45,8 @@ fn help(
 
 #[command]
 fn uptime(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read();
-    let bot_data = data.get::<BotData>().expect("Expected BotData");
-    let elapsed = bot_data.read().start_time.elapsed().as_secs();
+    let data_lock = ctx.data.read().get::<BotData>().cloned().expect("Expected BotData");
+    let elapsed = data_lock.lock().start_time.elapsed().as_secs();
 
     let resp = format!("Uptime: {}", utils::format_seconds(elapsed));
 

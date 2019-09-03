@@ -77,6 +77,16 @@ pub fn insert_message(nm: NewMessage) -> Result<usize> {
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }
 
+pub fn insert_messages(nms: &Vec<NewMessage>) -> Result<usize> {
+    use crate::schema::messages::dsl::*;
+
+    let conn = pool().get()?;
+    insert_into(messages)
+        .values(nms)
+        .execute(&conn)
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
 pub fn delete_guild_messages(gid: &str) -> Result<usize> {
     use crate::schema::messages::dsl::*;
 

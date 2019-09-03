@@ -139,9 +139,8 @@ fn disable_all(ctx: &mut Context, msg: &Message) -> CommandResult {
 // --------------------------------------------------------------------
 
 fn refresh_disabled_channel_ids(ctx: &Context) -> CommandResult {
-    let data = ctx.data.read();
-    let rwlock = data.get::<BotData>().expect("Expected BotData");
-    let mut bot_data = rwlock.try_write().expect("Unable to get write to BotData");
+    let data_lock = ctx.data.read().get::<BotData>().cloned().expect("Expected BotData");
+    let mut bot_data = data_lock.lock();
 
     match db::disabled_channel_ids() {
         Ok(ids) => {
