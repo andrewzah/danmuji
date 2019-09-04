@@ -38,9 +38,22 @@ pub struct NewMessage {
     pub time: DateTime<FixedOffset>,
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub struct CharCount {
+    hangeul: i32,
+    non_hangeul: i32,
+    raw: i32,
+}
+
+impl CharCount {
+    pub fn new(hangeul: i32, non_hangeul: i32, raw: i32) -> CharCount {
+        CharCount { hangeul, non_hangeul, raw }
+    }
+}
+
 impl NewMessage {
     pub fn from_msg(msg: &SerenityMessage) -> Result<NewMessage> {
-        let (hc, nhc, rc) = utils::parse_content(&msg.content)?;
+        let char_count = utils::parse_message_content(&msg.content)?;
 
         Ok(NewMessage {
             content: msg.content.clone(),
@@ -48,9 +61,9 @@ impl NewMessage {
             guild_id: msg.guild_id.unwrap_or(GuildId(0_u64)).to_string(),
             channel_id: msg.channel_id.to_string(),
             user_id: msg.author.id.to_string(),
-            hangeul_count: hc,
-            non_hangeul_count: nhc,
-            raw_count: rc,
+            hangeul_count: char_count.hangeul,
+            non_hangeul_count: char_count.non_hangeul,
+            raw_count: char_count.raw,
             time: msg.timestamp,
         })
     }

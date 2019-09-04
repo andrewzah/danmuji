@@ -62,9 +62,12 @@ impl EventHandler for Handler {
     }
 }
 
-/// Checks incoming message to determine if
-/// it should continue or not.
 fn message_filter(ctx: &Context, msg: &Message) -> bool {
+    // ignore all bots
+    if msg.author.bot == true {
+        return true;
+    }
+
     let data = ctx.data.read();
     let mutex = data.get::<BotData>().expect("Expected BotData mutex");
     let bot_data = mutex.lock();
@@ -77,29 +80,34 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
         return true;
     }
 
-    // ignore all bots
-    if msg.author.bot == true {
+    content_filter(&msg.content)
+}
+
+/// Checks incoming message to determine if
+/// it should continue or not.
+fn content_filter(content: &str) -> bool {
+    if utils::starts_with_link(&content) {
         return true;
     }
 
     // ignore self input commands
-    if msg.content.starts_with("yi ") {
+    if content.starts_with("yi ") {
         return true;
     }
 
     // TODO remove when deploying!
-    if msg.content.starts_with("di ") {
+    if content.starts_with("di ") {
         return true;
     }
 
     // ignore reply commands
-    if msg.content.starts_with(">") {
+    if content.starts_with(">") {
         return true;
     }
 
     // ignore other command messages
     // don't ignore stuff like quotes/parens
-    if let Some(c) = msg.content.chars().next() {
+    if let Some(c) = content.chars().next() {
         if c == '"' || c == '\'' || c == '(' || c == '-' {
             return false;
         }
@@ -119,4 +127,23 @@ fn check_reply(guild_id: GuildId, ctx: &Context, msg: &Message) {
             }
         }
     };
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_filters_links_at_start_messages() {
+        assert_eq!(true, content_filter("https://google.com/"));
+        assert_eq!(true, content_filter("https://twitter.com/andrew_zah/status/1121706223919722496"));
+        assert_eq!(true, content_filter("https://www.reddit.com/r/linux test"));
+        assert_eq!(false, content_filter("test https://www.reddit.com/r/linux test"));
+    }
+
+    #[test]
+    fn it_filters_or_doesnt_correctly_in_general() {
+        assert_eq!(false, content_filter("50% is accurate."));
+    }
 }

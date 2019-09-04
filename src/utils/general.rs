@@ -11,20 +11,19 @@ use serenity::{
     prelude::*,
 };
 
-use crate::{errors::Result, utils};
+use crate::{models::message::CharCount, errors::Result, utils};
 
-const SYLLABLE_START: u32 = 0xAC00;
-const SYLLABLE_END: u32 = 0xD7A3;
-const JAMO_START: u32 = 0x1100;
-const JAMO_END: u32 = 0x11FF;
-const COMPAT_JAMO_START: u32 = 0x3130;
-const COMPAT_JAMO_END: u32 = 0x318F;
-
-const NON_CHAR_REGEXP: &str = r"[\s\d\W]";
+const EMOTE_OR_MENTION_REGEXP: &str = r"<:[\w\d_~-]+:\d+>|<@!\d+>";
+const START_LINK_REGEXP: &str = r"^https?://";
+const NON_CHAR_REGEXP: &str = r"[^a-zA-Z\p{Hangul}]+";
 const CHANNEL_REGEXP: &str = r"<#(?P<i>\d+)>";
 const TAG_REGEXP: &str = r">(?P<t>[\w\d\-_]+)";
 
 lazy_static! {
+    static ref EMOTE_OR_MENTION_REGEX: Regex =
+        Regex::new(EMOTE_OR_MENTION_REGEXP).expect("Unable to init begin_link_regex!");
+    static ref START_LINK_REGEX: Regex =
+        Regex::new(START_LINK_REGEXP).expect("Unable to init begin_link_regex!");
     static ref NON_CHAR_REGEX: Regex =
         Regex::new(NON_CHAR_REGEXP).expect("Unable to init non_char_regex!");
     static ref CHANNEL_REGEX: Regex =
@@ -32,34 +31,25 @@ lazy_static! {
     static ref TAG_REGEX: Regex = Regex::new(TAG_REGEXP).expect("Unable to init tag_regex!");
 }
 
-#[allow(dead_code)]
-pub fn is_hangeul(c: char) -> bool {
-    let byte = c as u32;
-    if byte >= SYLLABLE_START && byte <= SYLLABLE_END {
-        return true;
-    } else if byte >= JAMO_START && byte <= JAMO_END {
-        return true;
-    } else if byte >= COMPAT_JAMO_START && byte <= COMPAT_JAMO_END {
-        return true;
-    }
-
-    return false;
+pub fn starts_with_link(content: &str) -> bool {
+    START_LINK_REGEX.is_match(content)
 }
 
 pub fn strip_content(content: &str) -> Result<String> {
     Ok(NON_CHAR_REGEX.replace_all(content, "").to_string())
 }
 
-pub fn parse_content(content: &str) -> Result<(i32, i32, i32)> {
+pub fn parse_message_content(content: &str) -> Result<CharCount> {
     let stripped = utils::strip_content(content)?;
 
     let (hangeul_chars, non_hangeul_chars): (Vec<char>, Vec<char>) =
-        stripped.par_chars().partition(|c| is_hangeul(*c));
+        stripped.par_chars().partition(|c| utils::hangeul::is_hangeul(c));
 
-    let hc = hangeul_chars.len() as i32;
-    let nc = non_hangeul_chars.len() as i32;
+    let hangeul_count = hangeul_chars.len() as i32;
+    let non_hangeul_count = non_hangeul_chars.len() as i32;
+    let raw_count = content.chars().collect::<Vec<char>>().len() as i32;
 
-    Ok((hc, nc, hc + nc))
+    Ok(CharCount::new(hangeul_count, non_hangeul_count, raw_count))
 }
 
 pub fn parse_tag(content: &str) -> Option<&str> {
@@ -127,19 +117,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_checks_hangeul() {
-        assert_eq!(true, is_hangeul('겴'));
-        assert_eq!(true, is_hangeul('만'));
-        assert_eq!(true, is_hangeul('ㅇ'));
-        assert_eq!(true, is_hangeul('ᄓ'));
-        assert_eq!(true, is_hangeul('ㄹ'));
+    fn it_strips_emoji() {
+        assert_eq!("testingpikahuhtest", strip_content("testing <:pikahuh:518007379699302400> test").unwrap());
     }
 
     #[test]
-    fn it_checks_non_hangeul() {
-        assert_eq!(false, is_hangeul('a'));
-        assert_eq!(false, is_hangeul('9'));
-        assert_eq!(false, is_hangeul('ž'));
+    fn it_strips_mentions() {
+        assert_eq!("testingtest", strip_content("testing <@!167501464414060544> test").unwrap());
     }
 
     #[test]
@@ -157,28 +141,36 @@ mod tests {
 
     #[test]
     fn it_parses_chars_correctly() {
-        assert_eq!((2, 2, 4), parse_content("ㅁㅁnn").unwrap());
+        assert_eq!(CharCount::new(2, 0, 3), parse_message_content("아침!").unwrap());
+        assert_eq!(CharCount::new(2, 2, 4), parse_message_content("ㅁㅁnn").unwrap());
     }
 
     #[test]
     fn it_parses_chars_with_quotes() {
         assert_eq!(
-            (7, 14, 21),
-            parse_content("'오늘 클립해줄게' lmaooooooooooo").unwrap()
+            CharCount::new(7, 14, 25),
+            parse_message_content("'오늘 클립해줄게' lmaooooooooooo").unwrap()
         );
         assert_eq!(
-            (7, 14, 21),
-            parse_content("\"오늘 클립해줄게\" lmaooooooooooo").unwrap()
+            CharCount::new(7, 14, 25),
+            parse_message_content("\"오늘 클립해줄게\" lmaooooooooooo").unwrap()
         );
     }
 
     #[test]
     fn it_parses_chars_with_punctuation() {
         assert_eq!(
-            (0, 23, 23),
-            parse_content("trev and marvin bucket list:").unwrap()
+            CharCount::new(0, 23, 28),
+            parse_message_content("trev and marvin bucket list:").unwrap()
         );
-        assert_eq!((2, 2, 4), parse_content("ㅁ!ㅁ!n @)(*%n").unwrap());
+        assert_eq!(CharCount::new(2, 2, 12), parse_message_content("ㅁ!ㅁ!n @)(*%n").unwrap());
+    }
+
+    #[test]
+    fn it_parses_in_general() {
+        assert_eq!(CharCount::new(0, 10, 16), parse_message_content("50% is accurate.").unwrap());
+        assert_eq!(CharCount::new(2, 11, 15), parse_message_content("general test ㅠㅠ").unwrap());
+
     }
 
     #[test]
@@ -188,6 +180,6 @@ mod tests {
             content.push_str("만a");
         }
 
-        assert_eq!((1000, 1000, 2000), parse_content(&content).unwrap());
+        assert_eq!(CharCount::new(1000, 1000, 2000), parse_message_content(&content).unwrap());
     }
 }

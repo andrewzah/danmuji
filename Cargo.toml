@@ -28,3 +28,6 @@ serde_json = "1.0.40"
 serenity = { version = "0.7", features = ["reqwest", "http"] }
 strfmt = "0.1.6"
 white_rabbit = "0.1.1"
+
+[dev-dependencies]
+mockall = "0.4.0"
