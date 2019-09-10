@@ -21,6 +21,9 @@ use crate::{
 group!({
     name: "channels",
     options: {
+        allowed_roles: [
+            "Mod", "Moderator", "Admin", "Administrator",
+        ],
         prefixes: ["chan", "c"],
     },
     commands: [

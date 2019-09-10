@@ -6,6 +6,7 @@ use serenity::{
         CommandResult,
     },
     model::channel::Message,
+    utils::Colour,
 };
 
 use crate::{checks::*, db, models::user::NewUser, utils};
@@ -16,16 +17,10 @@ group!({
         prefixes: ["hangeul", "hangul", "h"],
     },
     commands: [
-        opt_in, opt_out, ratio_results,
+        opt_in, opt_out, leaderboard,
         reset_guild, reset_all
     ],
 });
-
-#[command]
-fn ratio(ctx: &mut Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "Pong!")?;
-    Ok(())
-}
 
 fn change_user_opt_out(opt_out: bool, msg: &Message) -> CommandResult {
     let new_user = NewUser {
@@ -62,32 +57,43 @@ fn opt_in(ctx: &mut Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
-fn ratio_results(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let guild_id = msg
-        .guild_id
-        .ok_or("Replies don't work in direct messages.")?;
+#[bucket = "leaderboard"]
+#[only_in(guilds)]
+fn leaderboard(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let guild_id = match msg.guild_id {
+        Some(id) => id,
+        None => return Err(CommandError("".into()))
+    };
+
     let _ = &msg.channel_id.broadcast_typing(&ctx.http);
 
-    match db::get_ratio_list(&guild_id.to_string()) {
-        Ok(list) => utils::send_message(&msg.channel_id, &ctx, |m| {
-            m.embed(|e| {
-                e.title("한글/English Ratio Results");
-                e.description(list.pretty_print(&ctx.http));
+    match db::get_leaderboard(&guild_id.to_string()) {
+        Ok(list) => {
+            let text = list.pretty_print(&ctx.http)?;
 
-                e
-            });
-            m
-        }),
+                utils::send_message(&msg.channel_id, &ctx, |m| {
+                    m.embed(|e| {
+                        e.title("한글/English Leaderboard");
+                        e.description(text);
+                        e.colour(Colour::DARK_GOLD);
+
+                        e
+                    });
+                    m
+                })
+        },
         Err(err) => Err(CommandError::from(err)),
     }
 }
 
 #[command]
-#[checks(Admin)]
+#[allowed_roles("Admin", "Administrator")]
+#[only_in(guilds)]
 fn reset_guild(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let guild_id = msg
-        .guild_id
-        .ok_or("Replies don't work in direct messages.")?;
+    let guild_id = match msg.guild_id {
+        Some(id) => id,
+        None => return Err(CommandError("".into()))
+    };
 
     match db::delete_guild_messages(&guild_id.to_string()) {
         Ok(count) => utils::say(

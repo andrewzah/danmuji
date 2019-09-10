@@ -37,9 +37,8 @@ mod utils;
 
 use commands::{
     channels::CHANNELS_GROUP,
-    general::{ADMIN_GROUP, GENERAL_GROUP, HELP},
+    general::{GENERAL_GROUP, HELP},
     hangeul::HANGEUL_GROUP,
-    reminders::REMIND_ME_GROUP,
     replies::REPLIES_GROUP,
 };
 use dispatch::{DispatchEvent, DispatcherKey, SchedulerKey};
@@ -144,7 +143,6 @@ fn main() {
         Err(_) => String::from("yi "),
     };
 
-    // We will fetch your bot's owners and id
     let (owners, bot_id) = match client.cache_and_http.http.get_current_application_info() {
         Ok(info) => {
             let mut owners = HashSet::new();
@@ -157,6 +155,7 @@ fn main() {
 
     client.with_framework(
         StandardFramework::new()
+            .bucket("leaderboard", |b| b.delay(1).time_span(1440).limit(1))
             .configure(|c| {
                 c.prefix(&bot_prefix)
                     .on_mention(Some(bot_id))
@@ -177,11 +176,9 @@ fn main() {
                 });
             })
             .help(&HELP)
-            .group(&ADMIN_GROUP)
             .group(&GENERAL_GROUP)
             .group(&CHANNELS_GROUP)
             .group(&HANGEUL_GROUP)
-            .group(&REMIND_ME_GROUP)
             .group(&REPLIES_GROUP),
     );
 

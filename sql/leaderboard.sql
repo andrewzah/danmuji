@@ -24,8 +24,8 @@ summ AS
     sum_hangeul_count::integer as sum_hangeul_count,
     summ.sum_non_hangeul_count::integer as sum_non_hangeul_count,
     sum_raw_count::integer as sum_raw_count,
-    sum_hangeul_count::float / (sum_raw_count::float+1) as ratio
+    (sum_hangeul_count::float / sum_raw_count::float) * 100 as ratio
   FROM summ
   WHERE sum_raw_count > 0 --for bots that only respond with embeds/etc
 )
-SELECT * FROM map ORDER BY ratio DESC, sum_raw_count DESC;
+SELECT * FROM map ORDER BY ratio DESC, sum_raw_count DESC LIMIT 5;

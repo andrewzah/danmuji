@@ -28,4 +28,4 @@ summ AS
   FROM summ
   WHERE sum_raw_count > 0 --for bots that only respond with embeds/etc
 )
-SELECT * FROM map ORDER BY ratio DESC, sum_raw_count DESC;
+SELECT * FROM map ORDER BY ratio DESC, sum_raw_count DESC LIMIT 5;

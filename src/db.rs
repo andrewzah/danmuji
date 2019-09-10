@@ -7,7 +7,6 @@ use diesel::{
     sql_query,
 };
 use lazy_static::lazy_static;
-use log::info;
 use serenity::prelude::*;
 use strfmt::strfmt;
 
@@ -16,7 +15,7 @@ use crate::{
     models::{
         channel::{Channel, ChannelList, NewChannel},
         message::NewMessage,
-        ratio::RatioResultList,
+        leaderboard::LeaderBoard,
         reply::{NewReply, Reply, ReplyList},
         user::NewUser,
     },
@@ -213,18 +212,16 @@ pub fn delete_reply(keyword: &str, gid: &str) -> Result<usize> {
 
 // ---------------- SQL QUERIES ----------------------
 
-pub fn get_ratio_list(gid: &str) -> Result<RatioResultList> {
+pub fn get_leaderboard(gid: &str) -> Result<LeaderBoard> {
     let conn = pool().get()?;
-    let sql_file = fs::read_to_string("sql/ratio.sql")?;
+    let sql_file = fs::read_to_string("sql/leaderboard.sql")?;
     let mut vars = HashMap::new();
     vars.insert("guild_id".to_string(), gid);
     let sql = strfmt(&sql_file, &vars)?;
 
-    info!("{}", &sql);
-
     let results = sql_query(sql).load(&conn);
 
     results
-        .map(|list| RatioResultList::new(list))
+        .map(|list| LeaderBoard::new(list))
         .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
 }

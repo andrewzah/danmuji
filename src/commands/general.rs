@@ -13,7 +13,7 @@ use serenity::{
     model::{channel::Message, id::UserId},
 };
 
-use crate::{checks::*, utils, BotData};
+use crate::{utils, BotData};
 
 group!({
     name: "general",
@@ -21,15 +21,8 @@ group!({
     commands: [uptime],
 });
 
-group!({
-    name: "admin",
-    options: {
-        prefixes: ["admin"],
-    },
-    commands: [am_i_admin, am_i_owner],
-});
-
 #[help]
+#[lacking_permissions = "Hide"]
 fn help(
     context: &mut Context,
     msg: &Message,
@@ -54,25 +47,5 @@ fn uptime(ctx: &mut Context, msg: &Message) -> CommandResult {
     let resp = format!("Uptime: {}", utils::format_seconds(elapsed));
 
     let _ = msg.channel_id.say(&ctx.http, resp);
-    Ok(())
-}
-
-#[command]
-#[checks(Admin)]
-fn am_i_admin(ctx: &mut Context, msg: &Message) -> CommandResult {
-    if let Err(why) = msg.channel_id.say(&ctx.http, "Yes you are.") {
-        println!("Error sending message: {:?}", why);
-    }
-
-    Ok(())
-}
-
-#[command]
-#[checks(Owner)]
-fn am_i_owner(ctx: &mut Context, msg: &Message) -> CommandResult {
-    if let Err(why) = msg.channel_id.say(&ctx.http, "Yes you are.") {
-        println!("Error sending message: {:?}", why);
-    }
-
     Ok(())
 }

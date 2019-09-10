@@ -6,6 +6,7 @@ pub type Result<T> = result::Result<T, AppError>;
 
 pub struct AppError(Box<ErrorKind>);
 
+// TODO: snafu to make this less verbose
 impl AppError {
     pub(crate) fn new(kind: ErrorKind) -> AppError {
         AppError(Box::new(kind))
@@ -41,6 +42,7 @@ pub enum ErrorKind {
     IO(std::io::Error),
     Serenity(serenity::Error),
     StrFmt(strfmt::FmtError),
+    ParseInt(std::num::ParseIntError),
 }
 
 impl fmt::Display for AppError {
@@ -53,6 +55,7 @@ impl fmt::Display for AppError {
             ErrorKind::IO(ref err) => err.fmt(f),
             ErrorKind::Serenity(ref err) => err.fmt(f),
             ErrorKind::StrFmt(ref err) => err.fmt(f),
+            ErrorKind::ParseInt(ref err) => err.fmt(f),
         }
     }
 }
@@ -67,6 +70,7 @@ impl fmt::Debug for AppError {
             ErrorKind::IO(ref err) => err.fmt(f),
             ErrorKind::Serenity(ref err) => err.fmt(f),
             ErrorKind::StrFmt(ref err) => err.fmt(f),
+            ErrorKind::ParseInt(ref err) => err.fmt(f),
         }
     }
 }
@@ -127,5 +131,11 @@ impl From<serenity::framework::standard::CommandError> for AppError {
 impl From<strfmt::FmtError> for AppError {
     fn from(err: strfmt::FmtError) -> AppError {
         AppError::new(ErrorKind::StrFmt(err))
+    }
+}
+
+impl From<std::num::ParseIntError> for AppError {
+    fn from(err: std::num::ParseIntError) -> AppError {
+        AppError::new(ErrorKind::ParseInt(err))
     }
 }

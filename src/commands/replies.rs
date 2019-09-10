@@ -15,6 +15,9 @@ use crate::{db, models::reply::NewReply, utils};
 group!({
     name: "replies",
     options: {
+        allowed_roles: [
+            "Mod", "Moderator", "Admin", "Administrator",
+        ],
         prefixes: ["r", "replies"],
     },
     commands: [list, set, delete]
