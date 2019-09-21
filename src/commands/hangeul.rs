@@ -14,7 +14,7 @@ use crate::{checks::*, db, models::user::NewUser, utils};
 group!({
     name: "hangeul",
     options: {
-        prefixes: ["hangeul", "hangul", "h"],
+        prefixes: ["hangeul", "hangul"],
     },
     commands: [
         opt_in, opt_out, leaderboard,

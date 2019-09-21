@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use rayon::prelude::*;
 use regex::Regex;
 
-use crate::{models::message::CharCount, errors::Result, utils};
+use crate::{models::message::CharCount, errors::Result, utils, utils::jamo_length};
 
 const EMOTE_OR_MENTION_REGEXP: &str = r"<:[\w\d_~-]+:\d+>|<@!\d+>";
 const START_LINK_REGEXP: &str = r"^https?://";
@@ -37,9 +37,15 @@ pub fn parse_message_content(content: &str) -> Result<CharCount> {
     let (hangeul_chars, non_hangeul_chars): (Vec<char>, Vec<char>) =
         stripped.par_chars().partition(|c| is_hangeul(*c as u32));
 
-    let hangeul_count = hangeul_chars.len() as i32;
+    let hangeul_count = hangeul_chars
+        .iter()
+        .map(|c| jamo_length(&c))
+        .fold(0, |acc, x| acc + x);
     let non_hangeul_count = non_hangeul_chars.len() as i32;
-    let raw_count = content.chars().collect::<Vec<char>>().len() as i32;
+    let raw_count = 
+        content.chars().collect::<Vec<char>>().len() as i32
+        - hangeul_chars.len() as i32
+        + hangeul_count;
 
     Ok(CharCount::new(hangeul_count, non_hangeul_count, raw_count))
 }
@@ -100,18 +106,18 @@ mod tests {
 
     #[test]
     fn it_parses_chars_correctly() {
-        assert_eq!(CharCount::new(2, 0, 3), parse_message_content("아침!").unwrap());
+        assert_eq!(CharCount::new(5, 0, 6), parse_message_content("아침!").unwrap());
         assert_eq!(CharCount::new(2, 2, 4), parse_message_content("ㅁㅁnn").unwrap());
     }
 
     #[test]
     fn it_parses_chars_with_quotes() {
         assert_eq!(
-            CharCount::new(7, 14, 25),
+            CharCount::new(18, 14, 36),
             parse_message_content("'오늘 클립해줄게' lmaooooooooooo").unwrap()
         );
         assert_eq!(
-            CharCount::new(7, 14, 25),
+            CharCount::new(18, 14, 36),
             parse_message_content("\"오늘 클립해줄게\" lmaooooooooooo").unwrap()
         );
     }
@@ -139,6 +145,6 @@ mod tests {
             content.push_str("만a");
         }
 
-        assert_eq!(CharCount::new(1000, 1000, 2000), parse_message_content(&content).unwrap());
+        assert_eq!(CharCount::new(3000, 1000, 4000), parse_message_content(&content).unwrap());
     }
 }

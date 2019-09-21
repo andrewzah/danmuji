@@ -1,10 +1,18 @@
-use hangeul::{is_compat_jamo, decompose_char, compose_char};
-
-use crate::errors::Result;
+use hangeul::{is_jamo, is_compat_jamo, decompose_char, compose_char};
 
 /// Counts the number of Jamo in a string of Hangeul characters.
-pub fn jamo_length(input: &str) -> Result<i32> {
-    Ok(0)
+pub fn jamo_length(c: &char) -> i32 {
+    match decompose_char(c) {
+        Ok((_, _, Some(_))) => 3,
+        Ok((_, _, None)) => 2,
+        _ => {
+            if is_jamo(*c as u32) || is_compat_jamo(*c as u32) {
+                1
+            } else {
+                0
+            }
+        }
+    }
 }
 
 pub fn hangeul_to_ascii(input: &str) -> String {
@@ -257,11 +265,17 @@ impl HangeulAsciiMap {
 mod tests {
     use super::*;
 
-    //#[test]
-    //fn it_composes_hangeul() {
-        //assert_eq!("마", compose("ㅁㅏ"));
-        //assert_eq!("안녕하세요", compose("ㅇㅏㄴㄴㅕㅇㅎㅏㅅㅔㅇㅛ"));
-    //}
+    #[test]
+    fn it_counts_jamos() {
+        assert_eq!(3, jamo_length(&'값'));
+        assert_eq!(3, jamo_length(&'만'));
+        assert_eq!(2, jamo_length(&'하'));
+        assert_eq!(2, jamo_length(&'이'));
+        assert_eq!(1, jamo_length(&'ㅣ'));
+        assert_eq!(1, jamo_length(&'ㅋ'));
+        assert_eq!(0, jamo_length(&'a'));
+        assert_eq!(0, jamo_length(&'た'));
+    }
 
     #[test]
     fn it_converts_hangeul_to_ascii() {
@@ -270,9 +284,10 @@ mod tests {
         assert_eq!("dkssudgktpdy", hangeul_to_ascii("안녕하세요"));
     }
 
-    #[test]
-    fn it_converts_ascii_to_hangeul() {
-        assert_eq!("ㅣㅐㅣ", ascii_to_hangeul("lol"));
-        assert_eq!("안녕하세요", ascii_to_hangeul("dkssudgktpdy"));
-    }
+    // TODO
+    //#[test]
+    //fn it_converts_ascii_to_hangeul() {
+        //assert_eq!("ㅣㅐㅣ", ascii_to_hangeul("lol"));
+        //assert_eq!("안녕하세요", ascii_to_hangeul("dkssudgktpdy"));
+    //}
 }
