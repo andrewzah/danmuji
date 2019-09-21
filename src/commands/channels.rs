@@ -19,6 +19,20 @@ use crate::{
     BotData,
 };
 
+group!({
+    name: "channels",
+    options: {
+        allowed_roles: [
+            "Mod", "Moderator", "Admin", "Administrator",
+        ],
+        prefixes: ["channels", "chans", "c"],
+    },
+    commands: [
+        enable, list,
+        disable, disable_all,
+        enable_all,
+    ],
+});
 
 /// Lists all enabled or disabled channels for a guild.
 #[command]

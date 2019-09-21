@@ -1,3 +1,4 @@
+use array_tool::vec::Intersect;
 use log::{debug, error, info};
 use serenity::{model::prelude::*, prelude::*};
 
@@ -17,8 +18,8 @@ impl EventHandler for Handler {
 
     fn message(&self, ctx: Context, msg: Message) {
         if let Some(guild_id) = msg.guild_id {
-            if message_filter(&ctx, &msg) == false {
-                info!("filter not activated: {}", &msg.content);
+            if message_filter(guild_id, &ctx, &msg) == false {
+                info!("logging message, got past the filter: {}", &msg.content);
                 match NewMessage::from_msg(&msg) {
                     Ok(message) => {
                         let data_lock = ctx
@@ -62,7 +63,7 @@ impl EventHandler for Handler {
     }
 }
 
-fn message_filter(ctx: &Context, msg: &Message) -> bool {
+fn message_filter(guild_id: GuildId, ctx: &Context, msg: &Message) -> bool {
     // ignore all bots
     if msg.author.bot == true {
         return true;
@@ -77,6 +78,16 @@ fn message_filter(ctx: &Context, msg: &Message) -> bool {
         .disabled_channel_ids
         .contains(msg.channel_id.as_u64())
     {
+        return true;
+    }
+
+    let disabled_roles = match db::disabled_role_ids(&guild_id.to_string()) {
+        Ok(roles) => roles,
+        Err(_) => return true,
+    };
+    let roles = &msg.member.clone().unwrap().roles;
+    let member_roles: Vec<u64> = roles.iter().map(|role| *role.as_u64()).collect();
+    if member_roles.intersect(disabled_roles).len() > 0 {
         return true;
     }
 

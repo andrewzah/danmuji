@@ -10,8 +10,8 @@ pub struct Role {
 
 #[derive(Insertable, Debug)]
 #[table_name = "roles"]
-pub struct NewRole<'a> {
-    pub guild_id: &'a str,
-    pub role_id: &'a str,
+pub struct NewRole {
+    pub guild_id: String,
+    pub role_id: String,
     pub enabled: bool,
 }

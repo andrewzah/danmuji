@@ -5,3 +5,4 @@ pub mod hanja;
 pub mod queries;
 pub mod reminders;
 pub mod replies;
+pub mod roles;

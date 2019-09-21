@@ -9,22 +9,8 @@ use serenity::{
     utils::Colour,
 };
 
-use crate::{checks::*, db, commands::channels::*, models::user::NewUser, utils};
+use crate::{checks::*, commands::{channels::*, roles::*}, db, models::user::NewUser, utils};
 
-group!({
-    name: "channels",
-    options: {
-        allowed_roles: [
-            "Mod", "Moderator", "Admin", "Administrator",
-        ],
-        prefixes: ["channels", "chans", "c"],
-    },
-    commands: [
-        list, enable,
-        disable, disable_all,
-        enable_all,
-    ],
-});
 
 group!({
     name: "hangeul",
@@ -36,6 +22,7 @@ group!({
         reset_guild, reset_all
     ],
     sub_groups: [
+        ROLES,
         CHANNELS
     ]
 });

@@ -14,6 +14,7 @@ use strfmt::strfmt;
 use crate::{
     errors::*,
     models::{
+        role::{Role, NewRole},
         channel::{Channel, ChannelList, NewChannel},
         message::NewMessage,
         leaderboard::LeaderBoard,
@@ -178,6 +179,41 @@ pub fn disabled_channel_ids() -> Result<Vec<u64>> {
         Err(err) => Err(err),
     }
 }
+
+pub fn upsert_roles(nrs: &Vec<NewRole>, new_enabled: bool) -> Result<usize> {
+    use crate::schema::roles::dsl::*;
+
+    let conn = pool().get()?;
+    insert_into(roles)
+        .values(nrs)
+        .on_conflict((role_id, guild_id))
+        .do_update()
+        .set(enabled.eq(new_enabled))
+        .execute(&conn)
+        .map_err(|err| AppError::new(ErrorKind::DbResult(err)))
+}
+
+pub fn disabled_role_ids(gid: &str) -> Result<Vec<u64>> {
+    use crate::schema::roles::dsl::*;
+
+    let conn = pool().get()?;
+    let results = roles
+        .filter(guild_id.eq(gid).and(enabled.eq(false)))
+        .load::<Role>(&conn)
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)));
+
+    match results {
+        Ok(gids) => {
+            let ids = gids
+                .into_iter()
+                .map(|role| role.role_id.parse::<u64>().expect("Unable to parse guild id!"))
+                .collect();
+            Ok(ids)
+        },
+        Err(err) => Err(err),
+    }
+}
+
 
 pub fn get_replies(gid: &str) -> Result<ReplyList> {
     use crate::schema::replies::dsl::*;
