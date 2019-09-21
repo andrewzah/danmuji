@@ -1,4 +1,3 @@
-use log::info;
 use serenity::{
     framework::standard::{macros::check, Args, CheckResult, CommandOptions},
     model::channel::Message,
