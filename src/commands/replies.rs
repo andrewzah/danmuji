@@ -8,6 +8,7 @@ use serenity::{
         CommandResult,
     },
     model::channel::Message,
+    utils::Colour,
 };
 
 use crate::{db, models::reply::NewReply, utils};
@@ -15,15 +16,14 @@ use crate::{db, models::reply::NewReply, utils};
 group!({
     name: "replies",
     options: {
-        allowed_roles: [
-            "Mod", "Moderator", "Admin", "Administrator",
-        ],
         prefixes: ["r", "replies"],
     },
     commands: [list, set, delete]
 });
 
 #[command]
+#[allowed_roles("Mod,Moderator,Admin,Administrator")]
+#[usage("set name, https://yoururl.com")]
 fn set(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let tag: String = args.single()?;
     let url: String = args.single()?;
@@ -52,6 +52,7 @@ fn set(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
 }
 
 #[command]
+#[usage("list")]
 fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
     let guild_id = msg
         .guild_id
@@ -60,6 +61,7 @@ fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
     match db::get_replies(&guild_id.to_string()) {
         Ok(reply_list) => utils::send_message(&msg.channel_id, &ctx, |m| {
             m.embed(|e| {
+                e.colour(Colour::DARK_GOLD);
                 e.title("Replies");
                 e.description(reply_list.pretty_print());
 
@@ -74,6 +76,8 @@ fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
 
 #[command]
 #[aliases("del")]
+#[allowed_roles("Mod,Moderator,Admin,Administrator")]
+#[usage("tag-name")]
 fn delete(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let guild_id = msg
         .guild_id

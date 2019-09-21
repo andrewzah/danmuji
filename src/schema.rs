@@ -38,6 +38,15 @@ table! {
 }
 
 table! {
+    roles (id) {
+        id -> Int4,
+        guild_id -> Varchar,
+        role_id -> Varchar,
+        enabled -> Bool,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         user_id -> Varchar,
@@ -50,5 +59,6 @@ allow_tables_to_appear_in_same_query!(
     guilds,
     messages,
     replies,
+    roles,
     users,
 );

@@ -9,7 +9,22 @@ use serenity::{
     utils::Colour,
 };
 
-use crate::{checks::*, db, models::user::NewUser, utils};
+use crate::{checks::*, db, commands::channels::*, models::user::NewUser, utils};
+
+group!({
+    name: "channels",
+    options: {
+        allowed_roles: [
+            "Mod", "Moderator", "Admin", "Administrator",
+        ],
+        prefixes: ["channels", "chans", "c"],
+    },
+    commands: [
+        list, enable,
+        disable, disable_all,
+        enable_all,
+    ],
+});
 
 group!({
     name: "hangeul",
@@ -20,6 +35,9 @@ group!({
         opt_in, opt_out, leaderboard,
         reset_guild, reset_all
     ],
+    sub_groups: [
+        CHANNELS
+    ]
 });
 
 fn change_user_opt_out(opt_out: bool, msg: &Message) -> CommandResult {

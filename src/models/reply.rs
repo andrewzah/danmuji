@@ -26,16 +26,20 @@ impl ReplyList {
     }
 
     pub fn pretty_print(mut self) -> String {
-        self.list
-            .sort_by(|a, b| a.tag.to_lowercase().cmp(&b.tag.to_lowercase()));
+        if self.list.len() > 0 {
+            self.list
+                .sort_by(|a, b| a.tag.to_lowercase().cmp(&b.tag.to_lowercase()));
 
-        let tags = self
-            .list
-            .into_iter()
-            .map(|r| r.tag)
-            .collect::<Vec<String>>();
+            let tags = self
+                .list
+                .into_iter()
+                .map(|r| r.tag)
+                .collect::<Vec<String>>();
 
-        tags.join(", ")
+            tags.join(", ")
+        } else {
+            "No replies set yet.".into()
+        }
     }
 }
 

@@ -36,7 +36,6 @@ mod tasks;
 mod utils;
 
 use commands::{
-    channels::CHANNELS_GROUP,
     general::{GENERAL_GROUP, HELP},
     hangeul::HANGEUL_GROUP,
     hanja::HANJA_GROUP,
@@ -58,9 +57,11 @@ struct BotData {
     pub message_queue: Vec<NewMessage>,
     pub disabled_channel_ids: Vec<u64>,
 }
+
 impl TypeMapKey for BotData {
     type Value = Arc<Mutex<BotData>>;
 }
+
 impl BotData {
     pub fn insert_messages(&mut self) {
         let thirty_secs = Duration::from_secs(30);
@@ -156,7 +157,7 @@ fn main() {
 
     client.with_framework(
         StandardFramework::new()
-            .bucket("leaderboard", |b| b.delay(1).time_span(1440).limit(1))
+            .bucket("leaderboard", |b| b.delay(1).time_span(86400).limit(1))
             .configure(|c| {
                 c.prefix(&bot_prefix)
                     .on_mention(Some(bot_id))
@@ -178,7 +179,6 @@ fn main() {
             })
             .help(&HELP)
             .group(&GENERAL_GROUP)
-            .group(&CHANNELS_GROUP)
             .group(&HANGEUL_GROUP)
             .group(&HANJA_GROUP)
             .group(&REPLIES_GROUP),

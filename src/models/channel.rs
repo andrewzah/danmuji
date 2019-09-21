@@ -1,8 +1,8 @@
 use std::{thread, time};
 
-use serenity::http::raw::Http;
+use serenity::{model::{prelude::Message, channel::ChannelType}, http::raw::Http};
 
-use crate::schema::channels;
+use crate::{errors::*, schema::channels};
 
 #[derive(Queryable, PartialEq, Debug)]
 pub struct Channel {
@@ -35,25 +35,27 @@ impl ChannelList {
     }
 
     // TODO: cache/get name
-    pub fn pretty_print(&self, _http: &Http) -> String {
-        let mut result = String::new();
-        result.push_str("Ratio Results:\n");
+    pub fn pretty_print(&self, msg: &Message, http: &Http) -> Result<String> {
+        let mut channel_names: Vec<String> = vec![];
 
         for channel in &self.list {
-            let _channel_id = channel
-                .channel_id
-                .parse::<u64>()
-                .expect("Unable to parse channel!");
-            // http.get_channel(channel_id).expect("Unable to get channel!").name,
-            let s = format!(
-                "**{}** - enabled: {}\n",
-                channel.channel_id, channel.enabled
-            );
-            result.push_str(&s);
+            let _ = &msg.channel_id.broadcast_typing(&http);
+            let channel_id = channel.channel_id.parse::<u64>()?;
 
-            thread::sleep(time::Duration::from_secs(1));
+            if let Ok(channel) = http.get_channel(channel_id) {
+                if let Some(guild_lock) = channel.guild() {
+                    let guild_channel = guild_lock.read();
+                    if guild_channel.kind == ChannelType::Text {
+                        channel_names.push(guild_channel.name.clone());
+                    }
+                }
+            };
+
+            thread::sleep(time::Duration::from_millis(500));
         }
 
-        result
+        channel_names.sort();
+
+        Ok(channel_names.join("\n"))
     }
 }

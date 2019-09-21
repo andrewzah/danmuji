@@ -22,7 +22,13 @@ group!({
 });
 
 #[help]
+#[individual_command_tip("Hello! 안녕하세요!
+    If you want more information about a specific command, just pass the command as argument.")]
+#[command_not_found_text = "Could not find: `{}`."]
+#[embed_success_colour(DARK_GOLD)]
+#[lacking_role = "Hide"]
 #[lacking_permissions = "Hide"]
+#[lacking_ownership = "Hide"]
 fn help(
     context: &mut Context,
     msg: &Message,

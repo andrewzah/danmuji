@@ -26,6 +26,7 @@ group!({
 
 #[command]
 #[aliases("h")]
+#[usage("\nyi hanja 화\nyi hanja 대한민국")]
 fn hanja(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let word = args.single::<String>()?;
 

@@ -8,6 +8,7 @@ use serenity::{
         CommandResult,
     },
     model::channel::{GuildChannel, Message},
+    utils::Colour,
 };
 
 use crate::{
@@ -18,43 +19,35 @@ use crate::{
     BotData,
 };
 
-group!({
-    name: "channels",
-    options: {
-        allowed_roles: [
-            "Mod", "Moderator", "Admin", "Administrator",
-        ],
-        prefixes: ["chan", "c"],
-    },
-    commands: [
-        list, enable,
-        disable, disable_all,
-        enable_all,
-    ],
-});
 
 /// Lists all enabled or disabled channels for a guild.
 #[command]
-fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
-    let channel_list = match db::all_channels() {
+pub fn list(ctx: &mut Context, msg: &Message) -> CommandResult {
+    let channel_list = match db::enabled_channels() {
         Ok(list) => list,
         Err(err) => return Err(CommandError::from(err)),
     };
 
-    match msg
-        .channel_id
-        .say(&ctx.http, channel_list.pretty_print(&ctx.http))
-    {
-        Ok(_) => {
-            info!("TODO");
-            Ok(())
-        },
-        Err(err) => Err(CommandError::from(err)),
-    }
+    let description = match channel_list.pretty_print(&msg, &ctx.http) {
+        Ok(desc) => desc,
+        Err(err) => return Err(CommandError::from(err))
+    };
+
+    utils::send_message(&msg.channel_id, &ctx, |m| {
+        m.embed(|e| {
+            e.colour(Colour::DARK_GOLD);
+            e.title("Enabled Channels");
+            e.description(description);
+
+            e
+        });
+
+        m
+    })
 }
 
 #[command]
-fn enable(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
+pub fn enable(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     match args.len() {
         0 => {
             let new_channel = vec![NewChannel {
@@ -104,7 +97,7 @@ fn disable(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
 }
 
 #[command]
-fn enable_all(ctx: &mut Context, msg: &Message) -> CommandResult {
+pub fn enable_all(ctx: &mut Context, msg: &Message) -> CommandResult {
     let channels = all_guild_channels(ctx, msg)?;
     let new_channels = channels
         .into_iter()
@@ -118,7 +111,7 @@ fn enable_all(ctx: &mut Context, msg: &Message) -> CommandResult {
 }
 
 #[command]
-fn disable_all(ctx: &mut Context, msg: &Message) -> CommandResult {
+pub fn disable_all(ctx: &mut Context, msg: &Message) -> CommandResult {
     let channels = all_guild_channels(ctx, msg)?;
     let new_channels = channels
         .into_iter()

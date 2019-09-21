@@ -146,6 +146,17 @@ pub fn all_channels() -> Result<ChannelList> {
         .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
 }
 
+pub fn enabled_channels() -> Result<ChannelList> {
+    use crate::schema::channels::dsl::*;
+
+    let conn = pool().get()?;
+    channels
+        .filter(enabled.eq(true))
+        .load::<Channel>(&conn)
+        .map(|list| ChannelList::new(list))
+        .map_err(|e| AppError::new(ErrorKind::DbResult(e)))
+}
+
 pub fn disabled_channel_ids() -> Result<Vec<u64>> {
     use crate::schema::channels::dsl::*;
 
