@@ -1,10 +1,11 @@
 use hanja as hanja_util;
+use hangeul::is_hangeul;
 use serenity::{
     client::Context,
     framework::standard::{
         Args,
         macros::{command, group},
-        CommandResult,
+        CommandError, CommandResult,
     },
     model::channel::Message,
     utils::Colour,
@@ -27,6 +28,7 @@ group!({
 #[aliases("h")]
 fn hanja(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
     let word = args.single::<String>()?;
+
     let limit = args.single::<usize>();
     let chars = word.chars().collect::<Vec<char>>();
 
@@ -35,17 +37,22 @@ fn hanja(ctx: &mut Context, msg: &Message, mut args: Args) -> CommandResult {
         _ => hanja_word(&word, limit.unwrap_or(3))
     };
 
-    utils::send_message(&msg.channel_id, &ctx, |m| {
-        m.embed(|e| {
-            e.colour(Colour::DARK_GOLD);
-            e.title("한자");
-            e.description(&format!("**{}**:\n{}", word, result));
+    if result.len() > word.len() + 5 {
+        utils::send_message(&msg.channel_id, &ctx, |m| {
+            m.embed(|e| {
+                e.colour(Colour::DARK_GOLD);
+                e.title("한자");
+                e.description(&format!("**{}**:\n{}", word, result));
 
-            e
-        });
+                e
+            });
 
-        m
-    })
+            m
+        })
+    } else {
+        utils::say(&msg.channel_id, &ctx, "Unable to parse text. Is this 한글?")
+    }
+
 }
 
 fn hanja_word(s: &str, limit: usize) -> String {

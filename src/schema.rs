@@ -25,7 +25,6 @@ table! {
         non_hangeul_count -> Int4,
         raw_count -> Int4,
         time -> Timestamptz,
-        content -> Nullable<Text>,
     }
 }
 

@@ -7,7 +7,6 @@ use crate::{db, errors::Result, schema::messages, utils};
 #[derive(Queryable, PartialEq, Debug)]
 pub struct Message {
     pub id: i32,
-    pub content: String,
     pub message_id: String,
     pub guild_id: String,
     pub channel_id: String,
@@ -27,7 +26,6 @@ pub struct MessageUserId {
 #[derive(Insertable, Clone, Debug)]
 #[table_name = "messages"]
 pub struct NewMessage {
-    pub content: String,
     pub message_id: String,
     pub guild_id: String,
     pub channel_id: String,
@@ -56,7 +54,6 @@ impl NewMessage {
         let char_count = utils::parse_message_content(&msg.content)?;
 
         Ok(NewMessage {
-            content: msg.content.clone(),
             message_id: msg.id.to_string(),
             guild_id: msg.guild_id.unwrap_or(GuildId(0_u64)).to_string(),
             channel_id: msg.channel_id.to_string(),

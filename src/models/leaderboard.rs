@@ -45,7 +45,7 @@ impl LeaderBoard {
             let name = http.get_user(user_id)?;
 
             let s = format!(
-                "* {}: **Ratio**: {:.0}%, **Hangeul**: {}, **Non-Hangeul**: {}, **Total Messages**: {}, **Raw Count**: {}\n",
+                "* {}: **Ratio**: {:.2}%, **Hangeul**: {}, **Non-Hangeul**: {}, **Total Messages**: {}, **Raw Count**: {}\n",
                 name, entry.ratio, entry.sum_hangeul_count,
                 entry.sum_non_hangeul_count, entry.sum_messages, entry.sum_raw_count
             );

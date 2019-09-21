@@ -1,5 +1,6 @@
 use std::{collections::HashMap, env, fs, sync::Arc, time::Duration};
 
+use chrono::prelude::*;
 use diesel::{
     insert_into,
     prelude::*,
@@ -215,8 +216,10 @@ pub fn delete_reply(keyword: &str, gid: &str) -> Result<usize> {
 pub fn get_leaderboard(gid: &str) -> Result<LeaderBoard> {
     let conn = pool().get()?;
     let sql_file = fs::read_to_string("sql/leaderboard.sql")?;
+    let month = format!("{}", Local::now().month());
     let mut vars = HashMap::new();
     vars.insert("guild_id".to_string(), gid);
+    vars.insert("month_no".to_string(), &month);
     let sql = strfmt(&sql_file, &vars)?;
 
     let results = sql_query(sql).load(&conn);

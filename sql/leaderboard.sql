@@ -5,7 +5,8 @@ WITH filter as (
   ON c.channel_id = m.channel_id
   LEFT JOIN users u
   ON u.user_id = m.user_id
-  WHERE m.guild_id = '{guild_id}'
+  WHERE EXTRACT(MONTH FROM m.time) = {month_no}
+  AND m.guild_id = '{guild_id}'
   AND c.enabled is NOT false
   AND u.opt_out IS NOT true
 ),
@@ -24,7 +25,7 @@ summ AS
     sum_hangeul_count::integer as sum_hangeul_count,
     summ.sum_non_hangeul_count::integer as sum_non_hangeul_count,
     sum_raw_count::integer as sum_raw_count,
-    (sum_hangeul_count::float / sum_raw_count::float) * 100 as ratio
+    (sum_hangeul_count::float / (sum_hangeul_count::float + sum_non_hangeul_count::float)) * 100 as ratio
   FROM summ
   WHERE sum_raw_count > 0 --for bots that only respond with embeds/etc
 )
